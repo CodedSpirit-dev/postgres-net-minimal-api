@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../build/postgres-net-minimal-api.props" />
+</Project>
