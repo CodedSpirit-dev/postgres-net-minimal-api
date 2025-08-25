@@ -60,6 +60,11 @@ namespace postgres_net_minimal_api.Migrations
                     b.Property<Guid>("RoleId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -78,7 +83,8 @@ namespace postgres_net_minimal_api.Migrations
                             FirstName = "Admin",
                             HashedPassword = "$2a$11$67rVUGbvftj.YcqUIiQGSeg47kWVtGJXZR8ZbESPh7VG5glAAtDqe",
                             LastName = "System",
-                            RoleId = new Guid("11111111-1111-1111-1111-111111111111")
+                            RoleId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            UserName = "Admin"
                         },
                         new
                         {
@@ -88,7 +94,8 @@ namespace postgres_net_minimal_api.Migrations
                             FirstName = "John",
                             HashedPassword = "yo$2a$11$5ByfQRylb6t1ucfmqMASC.OGbS4Qp7sPq4Dpc1YC24oiG6usM26PK",
                             LastName = "Doe",
-                            RoleId = new Guid("22222222-2222-2222-2222-222222222222")
+                            RoleId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            UserName = "User"
                         });
                 });
 
@@ -135,17 +142,12 @@ namespace postgres_net_minimal_api.Migrations
             modelBuilder.Entity("postgres_net_minimal_api.Models.User", b =>
                 {
                     b.HasOne("postgres_net_minimal_api.Models.UserRole", "Role")
-                        .WithMany("Users")
+                        .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("postgres_net_minimal_api.Models.UserRole", b =>
-                {
-                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }

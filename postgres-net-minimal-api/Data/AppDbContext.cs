@@ -36,6 +36,7 @@ public class AppDbContext : DbContext
             new User
             {
                 Id = adminUserId,
+                UserName = "Admin",
                 FirstName = "Admin",
                 LastName = "System",
                 Email = "admin@example.com",
@@ -46,6 +47,7 @@ public class AppDbContext : DbContext
             new User
             {
                 Id = standardUserId,
+                UserName = "User",
                 FirstName = "John",
                 LastName = "Doe",
                 Email = "john.doe@example.com",

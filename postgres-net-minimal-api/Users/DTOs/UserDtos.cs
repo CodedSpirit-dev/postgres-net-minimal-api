@@ -6,6 +6,7 @@ namespace postgres_net_minimal_api.DTOs;
 
 public record UserResponseDto(
     Guid Id,
+    string UserName,
     string FirstName,
     string LastName,
     string? MiddleName,
@@ -28,6 +29,7 @@ public static class UserExtensions
     {
         return new UserResponseDto(
             user.Id,
+            user.UserName,
             user.FirstName,
             user.LastName,
             user.MiddleName,

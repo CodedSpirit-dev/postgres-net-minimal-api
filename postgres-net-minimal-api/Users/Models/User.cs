@@ -12,6 +12,9 @@ public class User
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public Guid Id { get; set; }
 
+    [MaxLength(20)]
+    public string UserName { get; set; }
+    
     [Required]
     [MaxLength(100)]
     public string FirstName { get; set; }

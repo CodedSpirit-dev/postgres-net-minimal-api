@@ -16,10 +16,14 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/auth");
 
-        // Login
+        // Login - Permite tanto email como username
         group.MapPost("/login", async (LoginRequest request, AppDbContext db, IConfiguration config) =>
         {
-            var user = await db.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Email == request.Email);
+            // Buscar usuario por email o username
+            var user = await db.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == request.UsernameOrEmail.ToLower() || u.UserName.ToLower() == request.UsernameOrEmail.ToLower());
+            
             if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.HashedPassword))
                 return Results.Unauthorized();
 
@@ -40,6 +44,7 @@ public static class AuthEndpoints
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.UserName), // Agregado username al token
             new Claim(ClaimTypes.Role, user.Role.Name)
         };
 
@@ -57,6 +62,6 @@ public static class AuthEndpoints
 
 public class LoginRequest
 {
-    public string Email { get; set; }
-    public string Password { get; set; }
+    public string UsernameOrEmail { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 }

@@ -198,3 +198,7 @@ D:/projects/postgres-net-minimal-api/postgres-net-minimal-api/obj/Debug/net9.0/r
 /mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/bin/Debug/net9.0/runtimes/win/lib/net6.0/System.Security.Cryptography.ProtectedData.dll
 /mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/bin/Debug/net9.0/runtimes/win/lib/net6.0/System.Windows.Extensions.dll
 /mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/bin/Debug/net9.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+/mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/obj/Debug/net9.0/postgres-net-minimal-api.sourcelink.json
+/mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/bin/Debug/net9.0/Swashbuckle.AspNetCore.Swagger.dll
+/mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/bin/Debug/net9.0/Swashbuckle.AspNetCore.SwaggerGen.dll
+/mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/bin/Debug/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll
