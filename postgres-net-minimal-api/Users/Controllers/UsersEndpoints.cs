@@ -33,6 +33,7 @@ public static class UsersEndpoints
                     }
                 })
                 .ToListAsync())
+            .AllowAnonymous()  // ← AGREGADO: Permite acceso público
             .WithName("GetAllUsers")
             .WithSummary("Obtener todos los usuarios")
             .WithDescription("Retorna una lista de todos los usuarios con su información de rol")
@@ -65,6 +66,7 @@ public static class UsersEndpoints
                 
             return user is not null ? Results.Ok(user) : Results.NotFound();
         })
+        .AllowAnonymous()  // ← AGREGADO: Permite acceso público
         .WithName("GetUserById")
         .WithSummary("Obtener usuario por ID")
         .WithDescription("Retorna un usuario específico por su ID único")
@@ -72,9 +74,30 @@ public static class UsersEndpoints
         .Produces(404)
         .WithOpenApi();
 
-        // Create user - Solo Admin
+        // Create user - Público para registro
         group.MapPost("/", async (User inputUser, AppDbContext db) =>
         {
+            // Validar que el rol sea válido (opcional: solo permitir User o Guest para auto-registro)
+            var role = await db.UserRoles.FindAsync(inputUser.RoleId);
+            if (role is null)
+            {
+                return Results.BadRequest(new { error = "El rol especificado no existe" });
+            }
+
+            // Validar email único
+            var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == inputUser.Email);
+            if (existingUser is not null)
+            {
+                return Results.BadRequest(new { error = "El email ya está registrado" });
+            }
+
+            // Validar username único
+            var existingUsername = await db.Users.FirstOrDefaultAsync(u => u.UserName == inputUser.UserName);
+            if (existingUsername is not null)
+            {
+                return Results.BadRequest(new { error = "El nombre de usuario ya está en uso" });
+            }
+
             // Hash de la contraseña antes de guardar
             inputUser.HashedPassword = BCrypt.Net.BCrypt.HashPassword(inputUser.HashedPassword);
             inputUser.Id = Guid.NewGuid();
@@ -93,14 +116,12 @@ public static class UsersEndpoints
                 inputUser.RoleId
             });
         })
-        .RequireAuthorization(policy => policy.RequireRole("Admin"))
+        .AllowAnonymous()  // ← CAMBIADO: Permite registro público
         .WithName("CreateUser")
         .WithSummary("Crear nuevo usuario")
-        .WithDescription("Crea un nuevo usuario en el sistema. Solo usuarios con rol Admin pueden realizar esta acción.")
+        .WithDescription("Crea un nuevo usuario en el sistema (Registro público).")
         .Produces(201)
         .Produces(400)
-        .Produces(401)
-        .Produces(403)
         .WithOpenApi();
 
         // Update user - Solo Admin

@@ -202,3 +202,5 @@ D:/projects/postgres-net-minimal-api/postgres-net-minimal-api/obj/Debug/net9.0/r
 /mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/bin/Debug/net9.0/Swashbuckle.AspNetCore.Swagger.dll
 /mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/bin/Debug/net9.0/Swashbuckle.AspNetCore.SwaggerGen.dll
 /mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/bin/Debug/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll
+/mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/bin/Debug/net9.0/DotNetEnv.dll
+/mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/bin/Debug/net9.0/Sprache.dll

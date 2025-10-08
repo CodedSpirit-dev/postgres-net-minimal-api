@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("postgres-net-minimal-api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+07b726da069fd3e941b912dacae4334bd45a217f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5ac217c42034cabf2aa2edaa82be9d8a9f5f89d2")]
 [assembly: System.Reflection.AssemblyProductAttribute("postgres-net-minimal-api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("postgres-net-minimal-api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

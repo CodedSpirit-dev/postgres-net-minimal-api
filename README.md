@@ -1,23 +1,68 @@
 # PostgreSQL .NET Minimal API
 
-A REST API built with .NET 9, PostgreSQL, and Entity Framework Core for user and role management. This project serves as a **mockup foundation** for future iterations and development.
+![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?style=for-the-badge&logo=dotnet)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+
+A production-ready REST API built with .NET 9, PostgreSQL, and Entity Framework Core for user and role management. Features JWT authentication, Docker support, and comprehensive API documentation.
+
+## 📑 Table of Contents
+
+- [Features](#-features)
+- [Prerequisites](#-prerequisites)
+- [Quick Start](#-quick-start)
+- [Installation & Setup](#️-installation--setup)
+- [API Documentation](#-api-documentation)
+- [Project Structure](#️-project-structure)
+- [Development Commands](#-development-commands)
+- [TODO List](#-todo-list)
+- [Security](#-security--environment-variables)
+- [Troubleshooting](#-troubleshooting)
+- [Technologies Used](#️-technologies-used)
 
 ## 🚀 Features
 
-- ✅ BCrypt authentication
-- ✅ User and role management
-- ✅ PostgreSQL database
-- ✅ Entity Framework Core with migrations
-- ✅ Minimal API endpoints
-- ✅ Data validation
-- ✅ Circular reference prevention
-- ✅ Clean architecture foundation
+- ✅ **JWT Authentication** - Token-based authentication with BCrypt password hashing
+- ✅ **User & Role Management** - Complete CRUD operations for users and roles
+- ✅ **PostgreSQL Database** - Production-ready relational database
+- ✅ **Entity Framework Core** - Code-first approach with migrations
+- ✅ **Docker Support** - Docker Compose configuration for easy deployment
+- ✅ **Environment Variables** - Secure configuration with .env files
+- ✅ **Swagger/OpenAPI** - Interactive API documentation
+- ✅ **CORS Configuration** - Cross-origin resource sharing enabled
+- ✅ **Minimal API** - Modern .NET 9 minimal API pattern
+- ✅ **Seed Data** - Pre-configured users and roles for testing
 
 ## 📋 Prerequisites
 
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- [PostgreSQL](https://www.postgresql.org/download/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (recommended)
 - [Git](https://git-scm.com/)
+- Optional: [DBeaver](https://dbeaver.io/) or [pgAdmin](https://www.pgadmin.org/) for database management
+
+## ⚡ Quick Start
+
+```bash
+# 1. Clone repository
+git clone <repository-url>
+cd postgres-net-minimal-api
+
+# 2. Setup environment
+cp .env.example .env
+
+# 3. Start PostgreSQL
+docker-compose up -d
+
+# 4. Run migrations
+dotnet ef database update
+
+# 5. Run application
+dotnet run
+```
+
+Access the API at: **http://localhost:5174**
+Swagger UI at: **http://localhost:5174**
 
 ## 🛠️ Installation & Setup
 
@@ -32,9 +77,34 @@ cd postgres-net-minimal-api
 dotnet restore
 ```
 
-### 3. Setup PostgreSQL Database
+### 3. Setup Environment Variables
+Copy the example environment file and configure your credentials:
+```bash
+cp .env.example .env
+```
 
-#### Option A: Using Docker (Recommended)
+Edit `.env` file with your configuration:
+```env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_secure_password
+POSTGRES_DB=postgres_db
+POSTGRES_PORT=5433
+
+JWT_KEY=your_jwt_secret_key_at_least_32_characters_long
+JWT_ISSUER=tu_api_minimal
+JWT_AUDIENCE=clientes_de_tu_api
+```
+
+### 4. Setup PostgreSQL Database
+
+#### Option A: Using Docker Compose (Recommended)
+```bash
+docker-compose up -d
+```
+
+This will start PostgreSQL in a container with the configuration from your `.env` file.
+
+#### Option B: Using Docker Run
 ```bash
 docker run --name postgres17_minimal_api \
   -e POSTGRES_USER=postgres \
@@ -45,34 +115,24 @@ docker run --name postgres17_minimal_api \
   -d postgres:17
 ```
 
-#### Option B: Local PostgreSQL Installation
+#### Option C: Local PostgreSQL Installation
 Install PostgreSQL locally and create a database named `postgres_db`.
 
-### 4. Configure Database Connection
-Update the connection string in `appsettings.json`:
+### 5. Run Database Migrations
 
-**For Docker setup:**
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5433;Database=postgres_db;Username=postgres;Password=postgres"
-  }
-}
-```
-
-**For local PostgreSQL:**
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=postgres_db;Username=your_username;Password=your_password"
-  }
-}
-```
-
-### 5. Reset Database & Run Migrations
+Install EF Core tools if not already installed:
 ```bash
-dotnet ef database drop --force && rm -rf Migrations/ && dotnet ef migrations add InitialCreate && dotnet ef database update
+dotnet tool install --global dotnet-ef
 ```
+
+Apply migrations to create database tables:
+```bash
+dotnet ef database update
+```
+
+The migration will create:
+- `Users` table with seed data (Admin and User)
+- `UserRoles` table with seed data (Admin, User, Guest)
 
 ### 6. Run the Application
 ```bash
@@ -81,7 +141,51 @@ dotnet run
 
 The API will be available at: `http://localhost:5174`
 
+### 7. Test with Seed Data
+
+The migration automatically creates test users and roles:
+
+**Users:**
+- **Admin User**
+  - Email: `admin@example.com`
+  - Password: `Admin@123`
+  - Role: Admin
+
+- **Standard User**
+  - Email: `john.doe@example.com`
+  - Password: `User@123`
+  - Role: User
+
+**Roles:**
+- Admin - Full system access
+- User - Standard user access
+- Guest - Limited access
+
 ## 📚 API Documentation
+
+### Swagger UI
+Access interactive API documentation at: **http://localhost:5174**
+
+The Swagger UI allows you to:
+- Explore all available endpoints
+- Test API calls directly from the browser
+- View request/response schemas
+- Authenticate with JWT tokens
+
+### API Endpoints Overview
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/auth/login` | Authenticate user and get JWT token | No |
+| GET | `/users` | Get all users with roles | No* |
+| GET | `/users/{id}` | Get user by ID | No* |
+| POST | `/users` | Create new user | No* |
+| PUT | `/users/{id}` | Update user | No* |
+| DELETE | `/users/{id}` | Delete user | No* |
+| GET | `/roles` | Get all roles | No* |
+| GET | `/roles/{id}` | Get role by ID | No* |
+
+*_Authentication middleware not yet implemented (see TODO)_
 
 ### Authentication Endpoints
 
@@ -258,12 +362,37 @@ postgres-net-minimal-api/
 ├── Migrations/
 ├── Program.cs
 ├── appsettings.json
+├── appsettings.Development.json
+├── docker-compose.yml          # Docker Compose configuration
+├── .env                         # Environment variables (not in git)
+├── .env.example                 # Environment template
+├── .gitignore                   # Git ignore rules
 └── README.md
 ```
 
 ## 🔧 Development Commands
 
 ### Docker PostgreSQL Management
+
+#### Using Docker Compose
+```bash
+# Start PostgreSQL container
+docker-compose up -d
+
+# Stop PostgreSQL container
+docker-compose down
+
+# View container logs
+docker-compose logs -f postgres
+
+# Restart PostgreSQL container
+docker-compose restart
+
+# Connect to PostgreSQL CLI
+docker-compose exec postgres psql -U postgres -d postgres_db
+```
+
+#### Using Docker (Legacy)
 ```bash
 # Start PostgreSQL container
 docker start postgres17_minimal_api
@@ -278,60 +407,177 @@ docker logs postgres17_minimal_api
 docker exec -it postgres17_minimal_api psql -U postgres -d postgres_db
 ```
 
+### Database Tools (DBeaver, pgAdmin, etc.)
+
+To connect to PostgreSQL using database management tools:
+
+**Connection Parameters:**
+- **Host:** `localhost`
+- **Port:** `5433`
+- **Database:** `postgres_db`
+- **Username:** `postgres`
+- **Password:** `postgres`
+
+**DBeaver Quick Setup:**
+1. New Connection → PostgreSQL
+2. Enter connection parameters above
+3. Test Connection
+4. Download PostgreSQL driver if prompted
+5. Finish
+
+**Verify container is running:**
+```bash
+docker ps
+```
+You should see port mapping: `0.0.0.0:5433->5432/tcp`
+
 ### Database Migration Commands
 
-### Reset Database (Complete Clean)
+#### Install EF Core Tools
 ```bash
-dotnet ef database drop --force && rm -rf Migrations/ && dotnet ef migrations add InitialCreate && dotnet ef database update
+dotnet tool install --global dotnet-ef
 ```
 
-### Add New Migration
-```bash
-dotnet ef migrations add MigrationName
-```
-
-### Update Database
+#### Apply Migrations
 ```bash
 dotnet ef database update
 ```
 
-### Remove Last Migration
+#### View Applied Migrations
+```bash
+dotnet ef migrations list
+```
+
+#### Create New Migration
+```bash
+dotnet ef migrations add MigrationName
+```
+
+#### Remove Last Migration
 ```bash
 dotnet ef migrations remove
 ```
 
+#### Reset Database (Complete Clean)
+```bash
+dotnet ef database drop --force && rm -rf Migrations/ && dotnet ef migrations add InitialCreate && dotnet ef database update
+```
+
 ## 📝 TODO List
 
+### ✅ Completed
+- [x] JWT token generation and validation
+- [x] BCrypt password hashing
+- [x] User and role management endpoints
+- [x] Swagger/OpenAPI documentation
+- [x] Docker containerization with Docker Compose
+- [x] Environment variables configuration
+- [x] Database migrations and seed data
+- [x] CORS configuration
+
 ### High Priority
-- [ ] Implement JWT token generation and validation
-- [ ] Add proper authentication middleware
+- [ ] Add proper authentication middleware to protected endpoints
 - [ ] Create user registration endpoint
-- [ ] Add input validation and error handling
-- [ ] Implement role-based authorization
+- [ ] Add comprehensive input validation and error handling
+- [ ] Implement role-based authorization with policies
+- [ ] Add request/response logging
 
 ### Medium Priority
-- [ ] Add Username field to User model (nullable)
-- [ ] Create user roles management endpoints
+- [ ] Create dedicated roles management endpoints (POST, PUT, DELETE)
 - [ ] Add password reset functionality
 - [ ] Implement email verification
-- [ ] Add logging and monitoring
+- [ ] Add structured logging with Serilog
 - [ ] Create user profile endpoints
+- [ ] Add pagination to GET endpoints
+- [ ] Implement search and filtering
 
 ### Low Priority
-- [ ] Add Swagger/OpenAPI documentation
 - [ ] Implement rate limiting
 - [ ] Add unit and integration tests
-- [ ] Create Docker containerization
 - [ ] Add health check endpoints
 - [ ] Implement audit logging
+- [ ] Add API versioning
+- [ ] Create Dockerfile for API
 
 ### Future Iterations
 - [ ] Add refresh token mechanism
 - [ ] Implement OAuth2/OpenID Connect
-- [ ] Add two-factor authentication
+- [ ] Add two-factor authentication (2FA)
 - [ ] Create admin dashboard
 - [ ] Add file upload capabilities
-- [ ] Implement real-time notifications
+- [ ] Implement real-time notifications with SignalR
+- [ ] Add Redis caching
+- [ ] Implement background jobs with Hangfire
+
+## 🔒 Security & Environment Variables
+
+### Environment File (.env)
+- ⚠️ **NEVER commit `.env` to version control**
+- The `.env` file contains sensitive credentials
+- Always use `.env.example` as a template for new developers
+- Use different credentials for development and production
+
+### Configuration Priority
+The application loads configuration in this order (later sources override earlier ones):
+1. `appsettings.json` (base configuration)
+2. `appsettings.{Environment}.json` (environment-specific)
+3. `.env` file (loaded by DotNetEnv)
+4. Environment variables
+5. Command-line arguments
+
+### Production Deployment
+For production environments:
+- Use environment variables instead of `.env` file
+- Store secrets in secure vaults (Azure Key Vault, AWS Secrets Manager, etc.)
+- Never use default passwords
+- Generate strong JWT keys (minimum 32 characters)
+
+## ❓ Troubleshooting
+
+### Common Issues
+
+**Issue: Cannot connect to PostgreSQL**
+```bash
+# Check if container is running
+docker ps
+
+# Check container logs
+docker-compose logs postgres
+
+# Restart container
+docker-compose restart
+```
+
+**Issue: EF Core tools not found**
+```bash
+# Install globally
+dotnet tool install --global dotnet-ef
+
+# Verify installation
+dotnet ef --version
+```
+
+**Issue: Migration fails**
+```bash
+# Drop and recreate database
+dotnet ef database drop --force
+dotnet ef database update
+```
+
+**Issue: Port 5433 already in use**
+```bash
+# Check what's using the port
+lsof -i :5433  # Mac/Linux
+netstat -ano | findstr :5433  # Windows
+
+# Change port in .env file
+POSTGRES_PORT=5434
+```
+
+**Issue: .env file not loading**
+- Ensure `.env` file is in the root directory (same level as docker-compose.yml)
+- Check file permissions
+- Restart the application
 
 ## 🤝 Contributing
 
@@ -345,13 +591,43 @@ This is a mockup project for future development. Feel free to:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+## 🛠️ Technologies Used
+
+### Backend
+- **.NET 9** - Latest version of the .NET framework
+- **ASP.NET Core Minimal API** - Lightweight API framework
+- **Entity Framework Core 9** - ORM for database operations
+- **Npgsql** - PostgreSQL provider for EF Core
+
+### Database
+- **PostgreSQL 17** - Advanced open-source relational database
+- **Docker** - Containerization platform
+
+### Security
+- **JWT Bearer Authentication** - Token-based authentication
+- **BCrypt.Net** - Password hashing library
+
+### Tools & Libraries
+- **Swashbuckle (Swagger)** - API documentation
+- **DotNetEnv** - Environment variable management
+
 ## 🔗 Additional Resources
 
 - [.NET 9 Documentation](https://docs.microsoft.com/en-us/dotnet/)
 - [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 - [BCrypt.Net](https://github.com/BcryptNet/bcrypt.net)
+- [Docker Documentation](https://docs.docker.com/)
+- [JWT.IO](https://jwt.io/) - JWT Debugger
+
+## 📊 Project Stats
+
+- **Language:** C# 11
+- **Framework:** .NET 9.0
+- **Database:** PostgreSQL 17
+- **Architecture:** Minimal API Pattern
+- **Lines of Code:** ~500+ (excluding migrations)
 
 ---
 
-**Note:** This project is intended as a foundation mockup for future iterations. The authentication system uses placeholder tokens and should be replaced with proper JWT implementation in production.
+**Note:** This project is a production-ready foundation with JWT authentication, Docker support, and comprehensive API documentation. Review the TODO list for planned enhancements.

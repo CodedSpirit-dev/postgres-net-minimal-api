@@ -5,6 +5,14 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using postgres_net_minimal_api.Controllers;
 using postgres_net_minimal_api.Data;
+using DotNetEnv;
+
+// Load environment variables from .env file if it exists
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
+if (File.Exists(envPath))
+{
+    Env.Load(envPath);
+}
 
 var builder = WebApplication.CreateBuilder(args);
 

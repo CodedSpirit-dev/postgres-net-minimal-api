@@ -12,7 +12,7 @@ using postgres_net_minimal_api.Data;
 namespace postgres_net_minimal_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250824223116_InitialCreate")]
+    [Migration("20251008052524_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
