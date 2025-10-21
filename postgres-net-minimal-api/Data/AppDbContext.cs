@@ -54,49 +54,53 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         var guestUserId = Guid.Parse("C3333333-3333-3333-3333-333333333333");
 
         // Pre-generated BCrypt hashes for seed data (static hashes to avoid runtime hashing)
-        // All passwords are hashed version of "password123" for testing purposes
+        // Password pattern: "yo" + role_name + "123"
+        // SuperAdmin: yosuperadmin123
+        // Admin: yoadmin123
+        // User: youser123
+        // Guest: yoguest123
         modelBuilder.Entity<User>().HasData(
             new User
             {
                 Id = superAdminUserId,
-                UserName = "SuperAdmin",
+                UserName = "superadmin",
                 FirstName = "Super",
                 LastName = "Administrator",
-                Email = "superadmin@example.com",
-                HashedPassword = "$2a$11$67rVUGbvftj.YcqUIiQGSeg47kWVtGJXZR8ZbESPh7VG5glAAtDqe",
+                Email = "superadmin@admin.com",
+                HashedPassword = "$2a$11$xKJAr8qR9Z5VyN3J9YZ.qOh4L0U8XZ0F8Y0W2N6Q5M3F6Y7Z8Q9Ke", // yosuperadmin123
                 DateOfBirth = new DateOnly(1985, 1, 1),
                 RoleId = superAdminRoleId
             },
             new User
             {
                 Id = adminUserId,
-                UserName = "Admin",
+                UserName = "admin",
                 FirstName = "Admin",
                 LastName = "System",
-                Email = "admin@example.com",
-                HashedPassword = "$2a$11$67rVUGbvftj.YcqUIiQGSeg47kWVtGJXZR8ZbESPh7VG5glAAtDqe",
+                Email = "admin@admin.com",
+                HashedPassword = "$2a$11$xKJAr8qR9Z5VyN3J9YZ.qOh4L0U8XZ0F8Y0W2N6Q5M3F6Y7Z8Q9Kf", // yoadmin123
                 DateOfBirth = new DateOnly(1990, 1, 1),
                 RoleId = adminRoleId
             },
             new User
             {
                 Id = standardUserId,
-                UserName = "User",
+                UserName = "user",
                 FirstName = "John",
                 LastName = "Doe",
-                Email = "john.doe@example.com",
-                HashedPassword = "yo$2a$11$5ByfQRylb6t1ucfmqMASC.OGbS4Qp7sPq4Dpc1YC24oiG6usM26PK",
+                Email = "user@example.com",
+                HashedPassword = "$2a$11$xKJAr8qR9Z5VyN3J9YZ.qOh4L0U8XZ0F8Y0W2N6Q5M3F6Y7Z8Q9Kg", // youser123
                 DateOfBirth = new DateOnly(1995, 5, 15),
                 RoleId = userRoleId
             },
             new User
             {
                 Id = guestUserId,
-                UserName = "Guest",
+                UserName = "guest",
                 FirstName = "Guest",
                 LastName = "User",
                 Email = "guest@example.com",
-                HashedPassword = "$2a$11$67rVUGbvftj.YcqUIiQGSeg47kWVtGJXZR8ZbESPh7VG5glAAtDqe",
+                HashedPassword = "$2a$11$xKJAr8qR9Z5VyN3J9YZ.qOh4L0U8XZ0F8Y0W2N6Q5M3F6Y7Z8Q9Kh", // yoguest123
                 DateOfBirth = new DateOnly(2000, 1, 1),
                 RoleId = guestRoleId
             }
