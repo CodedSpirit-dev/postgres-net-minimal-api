@@ -392,6 +392,30 @@ public class PostService(AppDbContext context) : IPostService
             return null;
         }
 
+        // Validate post can be published
+        if (string.IsNullOrWhiteSpace(post.Content) || post.Content.Length < 50)
+        {
+            throw new InvalidOperationException("Post must have at least 50 characters of content to be published");
+        }
+
+        if (string.IsNullOrWhiteSpace(post.Title) || post.Title.Length < 5)
+        {
+            throw new InvalidOperationException("Post must have a title with at least 5 characters to be published");
+        }
+
+        // If already published, return current state (idempotent operation)
+        if (post.IsPublished)
+        {
+            var currentPost = await _context.Posts
+                .AsNoTracking()
+                .Include(p => p.Author)
+                .Include(p => p.Category)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+
+            return currentPost?.ToDto();
+        }
+
         post.IsPublished = true;
         post.PublishedAt = DateTime.UtcNow;
         post.UpdatedAt = DateTime.UtcNow;

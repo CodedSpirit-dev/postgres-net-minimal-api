@@ -119,12 +119,8 @@ public class CommentService(AppDbContext context) : ICommentService
 
         _context.Comments.Add(comment);
 
-        // Increment post comment count
-        var post = await _context.Posts.FindAsync([request.PostId], cancellationToken);
-        if (post is not null)
-        {
-            post.CommentCount++;
-        }
+        // NOTE: Comment count is NOT incremented here because comment requires approval
+        // Comment count will be incremented when comment is approved via ApproveCommentAsync
 
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -175,8 +171,8 @@ public class CommentService(AppDbContext context) : ICommentService
 
         _context.Comments.Remove(comment);
 
-        // Decrement post comment count
-        if (comment.Post is not null)
+        // Only decrement count if comment was approved (visible)
+        if (comment.IsApproved && comment.Post is not null && comment.Post.CommentCount > 0)
         {
             comment.Post.CommentCount--;
         }
@@ -188,14 +184,27 @@ public class CommentService(AppDbContext context) : ICommentService
 
     public async Task<bool> ApproveCommentAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var comment = await _context.Comments.FindAsync([id], cancellationToken);
+        var comment = await _context.Comments
+            .Include(c => c.Post)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
         if (comment is null)
         {
             return false;
         }
 
-        comment.IsApproved = true;
+        // Only increment count if transitioning from not approved to approved
+        if (!comment.IsApproved)
+        {
+            comment.IsApproved = true;
+
+            // Increment post comment count when comment is approved
+            if (comment.Post is not null)
+            {
+                comment.Post.CommentCount++;
+            }
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;
@@ -203,14 +212,27 @@ public class CommentService(AppDbContext context) : ICommentService
 
     public async Task<bool> RejectCommentAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var comment = await _context.Comments.FindAsync([id], cancellationToken);
+        var comment = await _context.Comments
+            .Include(c => c.Post)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
         if (comment is null)
         {
             return false;
         }
 
-        comment.IsApproved = false;
+        // Only decrement count if transitioning from approved to not approved
+        if (comment.IsApproved)
+        {
+            comment.IsApproved = false;
+
+            // Decrement post comment count when comment is rejected
+            if (comment.Post is not null && comment.Post.CommentCount > 0)
+            {
+                comment.Post.CommentCount--;
+            }
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;
