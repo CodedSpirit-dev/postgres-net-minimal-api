@@ -61,22 +61,28 @@ public static class AuthEndpoints
             IAuthService authService,
             CancellationToken cancellationToken) =>
         {
-            var token = await authService.AuthenticateAsync(
+            var result = await authService.AuthenticateWithUserDataAsync(
                 request.UsernameOrEmail,
                 request.Password,
                 cancellationToken);
 
-            if (token is null)
+            if (result is null)
             {
-                return Results.Unauthorized();
+                return Results.Json(
+                    new { success = false, message = "Invalid username/email or password" },
+                    statusCode: 401);
             }
 
-            return Results.Ok(new LoginResponse(token));
+            return Results.Ok(new LoginResponse(
+                Success: true,
+                Message: "Login successful",
+                Token: result.Token,
+                User: result.User));
         })
         .RequireRateLimiting("login") // Rate limit to prevent brute force attacks
         .WithName("Login")
         .WithSummary("User login")
-        .WithDescription("Authenticates a user with email/username and password. Returns a JWT token on success. Rate limited to 5 attempts per minute.")
+        .WithDescription("Authenticates a user with email/username and password. Returns a JWT token and user data on success. Rate limited to 5 attempts per minute.")
         .Produces<LoginResponse>(200)
         .Produces(401)
         .Produces(429)
@@ -112,7 +118,11 @@ public record LoginRequest
 /// <summary>
 /// Login response DTO
 /// </summary>
-public record LoginResponse(string Token);
+public record LoginResponse(
+    bool Success,
+    string Message,
+    string Token,
+    UserResponseDto User);
 
 /// <summary>
 /// Registration response DTO
