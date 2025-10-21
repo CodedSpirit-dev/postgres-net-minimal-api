@@ -283,15 +283,42 @@ public static class ProfilesEndpoints
         group.MapGet("/user/{userId:guid}", async (
             Guid userId,
             IProfileService profileService,
+            IPermissionChecker permissionChecker,
+            ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+
+            // Allow viewing own profile or require Profiles.View permission for other profiles
+            if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var currentUserId))
+            {
+                if (currentUserId != userId)
+                {
+                    var hasPermission = await permissionChecker.HasPermissionAsync(
+                        currentUserId, ResourceType.Profiles, ActionType.View);
+
+                    if (!hasPermission)
+                    {
+                        return Results.Forbid();
+                    }
+                }
+            }
+            else
+            {
+                // Anonymous users cannot view profiles
+                return Results.Unauthorized();
+            }
+
             var profile = await profileService.GetProfileByUserIdAsync(userId, cancellationToken);
             return profile is not null ? Results.Ok(profile) : Results.NotFound();
         })
-        .AllowAnonymous()
+        .RequireAuthorization()
         .WithName("GetProfileByUserId")
         .WithSummary("Get profile by user ID")
+        .WithDescription("Returns a user's profile. Users can view their own profile or require Profiles.View permission to view others.")
         .Produces<ProfileResponseDto>(200)
+        .Produces(401)
+        .Produces(403)
         .Produces(404)
         .WithOpenApi();
 
@@ -301,7 +328,12 @@ public static class ProfilesEndpoints
             ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
-            var userId = Guid.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
             var profile = await profileService.GetProfileByUserIdAsync(userId, cancellationToken);
             return profile is not null ? Results.Ok(profile) : Results.NotFound(new { message = "Profile not found. Create one first." });
         })
@@ -320,9 +352,14 @@ public static class ProfilesEndpoints
             ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
             try
             {
-                var userId = Guid.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
                 var profile = await profileService.CreateOrUpdateProfileAsync(userId, request, cancellationToken);
                 return Results.Ok(profile);
             }
@@ -346,7 +383,12 @@ public static class ProfilesEndpoints
             ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
-            var userId = Guid.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
             var deleted = await profileService.DeleteProfileAsync(userId, cancellationToken);
             return deleted ? Results.NoContent() : Results.NotFound();
         })

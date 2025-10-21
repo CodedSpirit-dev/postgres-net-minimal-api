@@ -61,8 +61,8 @@ public static class PostsEndpoints
                 return Results.NotFound();
             }
 
-            // Increment view count asynchronously (fire and forget)
-            _ = postService.IncrementViewCountAsync(id, CancellationToken.None);
+            // Increment view count - await to ensure it completes
+            await postService.IncrementViewCountAsync(id, cancellationToken);
 
             return Results.Ok(post);
         })
@@ -87,11 +87,8 @@ public static class PostsEndpoints
                 return Results.NotFound();
             }
 
-            // Increment view count asynchronously (fire and forget)
-            if (post.Id != Guid.Empty)
-            {
-                _ = postService.IncrementViewCountAsync(post.Id, CancellationToken.None);
-            }
+            // Increment view count - await to ensure it completes
+            await postService.IncrementViewCountAsync(post.Id, cancellationToken);
 
             return Results.Ok(post);
         })
