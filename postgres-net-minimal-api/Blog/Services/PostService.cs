@@ -383,6 +383,58 @@ public class PostService(AppDbContext context) : IPostService
         return true;
     }
 
+    public async Task<PostResponseDto?> PublishPostAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var post = await _context.Posts.FindAsync([id], cancellationToken);
+
+        if (post is null)
+        {
+            return null;
+        }
+
+        post.IsPublished = true;
+        post.PublishedAt = DateTime.UtcNow;
+        post.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Retrieve the updated post with all related data
+        var updatedPost = await _context.Posts
+            .AsNoTracking()
+            .Include(p => p.Author)
+            .Include(p => p.Category)
+            .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+
+        return updatedPost?.ToDto();
+    }
+
+    public async Task<PostResponseDto?> UnpublishPostAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var post = await _context.Posts.FindAsync([id], cancellationToken);
+
+        if (post is null)
+        {
+            return null;
+        }
+
+        post.IsPublished = false;
+        post.PublishedAt = null;
+        post.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Retrieve the updated post with all related data
+        var updatedPost = await _context.Posts
+            .AsNoTracking()
+            .Include(p => p.Author)
+            .Include(p => p.Category)
+            .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+
+        return updatedPost?.ToDto();
+    }
+
     public async Task IncrementViewCountAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var post = await _context.Posts.FindAsync([id], cancellationToken);

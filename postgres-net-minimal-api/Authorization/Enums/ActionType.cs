@@ -5,14 +5,22 @@ namespace postgres_net_minimal_api.Authorization.Enums;
 /// </summary>
 public enum ActionType
 {
+    // Basic CRUD
     View,
     Create,
     Edit,
     Delete,
 
-    // Special actions
+    // Publishing actions (for blog posts)
+    Publish,
+    Unpublish,
+
+    // Moderation actions (for comments, posts)
     Approve,
     Reject,
+    Moderate,
+
+    // Data transfer
     Assign,
     Export,
     Import,

@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using postgres_net_minimal_api.Blog.Services;
 using postgres_net_minimal_api.DTOs;
+using postgres_net_minimal_api.Authorization.Services;
+using postgres_net_minimal_api.Authorization.Enums;
 
 namespace postgres_net_minimal_api.Blog.Controllers;
 
@@ -105,13 +107,26 @@ public static class PostsEndpoints
         group.MapPost("/", async (
             CreatePostRequest request,
             IPostService postService,
+            IPermissionChecker permissionChecker,
             ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            // Check if user has permission to create posts
+            var hasPermission = await permissionChecker.HasPermissionAsync(userId, ResourceType.Posts, ActionType.Create);
+            if (!hasPermission)
+            {
+                return Results.Forbid();
+            }
+
             try
             {
-                var authorId = Guid.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
-                var post = await postService.CreatePostAsync(request, authorId, cancellationToken);
+                var post = await postService.CreatePostAsync(request, userId, cancellationToken);
                 return Results.Created($"/api/posts/{post.Id}", post);
             }
             catch (InvalidOperationException ex)
@@ -122,10 +137,11 @@ public static class PostsEndpoints
         .RequireAuthorization()
         .WithName("CreatePost")
         .WithSummary("Create new post")
-        .WithDescription("Creates a new blog post. Requires authentication. Auto-generates slug and excerpt if not provided.")
+        .WithDescription("Creates a new blog post. Requires Posts.Create permission. Auto-generates slug and excerpt if not provided.")
         .Produces<PostResponseDto>(201)
         .Produces(400)
         .Produces(401)
+        .Produces(403)
         .WithOpenApi();
 
         // PUT /api/posts/{id} - Update post
@@ -133,9 +149,25 @@ public static class PostsEndpoints
             Guid id,
             UpdatePostRequest request,
             IPostService postService,
+            IPermissionChecker permissionChecker,
             ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            // Check permission AND ownership (user can edit their own posts OR has Posts.Manage)
+            var canEdit = await permissionChecker.HasPermissionAndOwnsResourceAsync(
+                userId, ResourceType.Posts, ActionType.Edit, id, cancellationToken);
+
+            if (!canEdit)
+            {
+                return Results.Forbid();
+            }
+
             try
             {
                 var post = await postService.UpdatePostAsync(id, request, cancellationToken);
@@ -155,10 +187,11 @@ public static class PostsEndpoints
         .RequireAuthorization()
         .WithName("UpdatePost")
         .WithSummary("Update post")
-        .WithDescription("Updates an existing blog post. Requires authentication.")
+        .WithDescription("Updates an existing blog post. Requires Posts.Edit permission and ownership of the post, OR Posts.Manage permission.")
         .Produces<PostResponseDto>(200)
         .Produces(400)
         .Produces(401)
+        .Produces(403)
         .Produces(404)
         .WithOpenApi();
 
@@ -166,16 +199,115 @@ public static class PostsEndpoints
         group.MapDelete("/{id:guid}", async (
             Guid id,
             IPostService postService,
+            IPermissionChecker permissionChecker,
+            ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            // Check permission AND ownership (user can delete their own posts OR has Posts.Manage)
+            var canDelete = await permissionChecker.HasPermissionAndOwnsResourceAsync(
+                userId, ResourceType.Posts, ActionType.Delete, id, cancellationToken);
+
+            if (!canDelete)
+            {
+                return Results.Forbid();
+            }
+
             var deleted = await postService.DeletePostAsync(id, cancellationToken);
             return deleted ? Results.NoContent() : Results.NotFound();
         })
-        .RequireAuthorization(policy => policy.RequireRole("Admin"))
+        .RequireAuthorization()
         .WithName("DeletePost")
         .WithSummary("Delete post")
-        .WithDescription("Permanently deletes a blog post. Requires Admin role.")
+        .WithDescription("Permanently deletes a blog post. Requires Posts.Delete permission and ownership of the post, OR Posts.Manage permission.")
         .Produces(204)
+        .Produces(401)
+        .Produces(403)
+        .Produces(404)
+        .WithOpenApi();
+
+        // PATCH /api/posts/{id}/publish - Publish a post
+        group.MapPatch("/{id:guid}/publish", async (
+            Guid id,
+            IPostService postService,
+            IPermissionChecker permissionChecker,
+            ClaimsPrincipal user,
+            CancellationToken cancellationToken) =>
+        {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            // Check permission AND ownership (user can publish their own posts OR has Posts.Manage)
+            var canPublish = await permissionChecker.HasPermissionAndOwnsResourceAsync(
+                userId, ResourceType.Posts, ActionType.Publish, id, cancellationToken);
+
+            if (!canPublish)
+            {
+                return Results.Forbid();
+            }
+
+            var post = await postService.PublishPostAsync(id, cancellationToken);
+            if (post is null)
+            {
+                return Results.NotFound();
+            }
+
+            return Results.Ok(post);
+        })
+        .RequireAuthorization()
+        .WithName("PublishPost")
+        .WithSummary("Publish a post")
+        .WithDescription("Publishes a post making it visible to the public. Requires Posts.Publish permission and ownership, OR Posts.Manage permission.")
+        .Produces<PostResponseDto>(200)
+        .Produces(401)
+        .Produces(403)
+        .Produces(404)
+        .WithOpenApi();
+
+        // PATCH /api/posts/{id}/unpublish - Unpublish a post
+        group.MapPatch("/{id:guid}/unpublish", async (
+            Guid id,
+            IPostService postService,
+            IPermissionChecker permissionChecker,
+            ClaimsPrincipal user,
+            CancellationToken cancellationToken) =>
+        {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            // Check permission AND ownership (user can unpublish their own posts OR has Posts.Manage)
+            var canUnpublish = await permissionChecker.HasPermissionAndOwnsResourceAsync(
+                userId, ResourceType.Posts, ActionType.Unpublish, id, cancellationToken);
+
+            if (!canUnpublish)
+            {
+                return Results.Forbid();
+            }
+
+            var post = await postService.UnpublishPostAsync(id, cancellationToken);
+            if (post is null)
+            {
+                return Results.NotFound();
+            }
+
+            return Results.Ok(post);
+        })
+        .RequireAuthorization()
+        .WithName("UnpublishPost")
+        .WithSummary("Unpublish a post")
+        .WithDescription("Unpublishes a post making it a draft again. Requires Posts.Unpublish permission and ownership, OR Posts.Manage permission.")
+        .Produces<PostResponseDto>(200)
         .Produces(401)
         .Produces(403)
         .Produces(404)

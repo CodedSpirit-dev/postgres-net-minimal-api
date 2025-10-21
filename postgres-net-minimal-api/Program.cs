@@ -61,7 +61,13 @@ builder.Services.AddMemoryCache();
 
 // Register permission services
 builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddScoped<IPermissionChecker, PermissionChecker>();
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+// Register ownership checkers for instance-level permissions
+builder.Services.AddScoped<PostOwnershipChecker>();
+builder.Services.AddScoped<CommentOwnershipChecker>();
+builder.Services.AddScoped<ProfileOwnershipChecker>();
 
 // Configure CORS
 builder.Services.AddCors(options =>

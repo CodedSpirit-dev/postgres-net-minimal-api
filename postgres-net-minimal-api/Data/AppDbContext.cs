@@ -346,16 +346,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         var createActionId = 2;
         var editActionId = 3;
         var deleteActionId = 4;
-        var approveActionId = 5;
-        var manageActionId = 6;
+        var publishActionId = 5;
+        var unpublishActionId = 6;
+        var approveActionId = 7;
+        var rejectActionId = 8;
+        var moderateActionId = 9;
+        var manageActionId = 10;
 
         modelBuilder.Entity<PermissionAction>().HasData(
             new PermissionAction { Id = viewActionId, Name = "View", ActionKey = "View", Description = "View/read resources", DisplayOrder = 1, CreatedAt = now },
             new PermissionAction { Id = createActionId, Name = "Create", ActionKey = "Create", Description = "Create new resources", DisplayOrder = 2, CreatedAt = now },
             new PermissionAction { Id = editActionId, Name = "Edit", ActionKey = "Edit", Description = "Edit existing resources", DisplayOrder = 3, CreatedAt = now },
             new PermissionAction { Id = deleteActionId, Name = "Delete", ActionKey = "Delete", Description = "Delete resources", DisplayOrder = 4, CreatedAt = now },
-            new PermissionAction { Id = approveActionId, Name = "Approve", ActionKey = "Approve", Description = "Approve/reject resources", DisplayOrder = 5, CreatedAt = now },
-            new PermissionAction { Id = manageActionId, Name = "Manage", ActionKey = "Manage", Description = "Full management access", DisplayOrder = 6, CreatedAt = now }
+            new PermissionAction { Id = publishActionId, Name = "Publish", ActionKey = "Publish", Description = "Publish content", DisplayOrder = 5, CreatedAt = now },
+            new PermissionAction { Id = unpublishActionId, Name = "Unpublish", ActionKey = "Unpublish", Description = "Unpublish content", DisplayOrder = 6, CreatedAt = now },
+            new PermissionAction { Id = approveActionId, Name = "Approve", ActionKey = "Approve", Description = "Approve pending content", DisplayOrder = 7, CreatedAt = now },
+            new PermissionAction { Id = rejectActionId, Name = "Reject", ActionKey = "Reject", Description = "Reject pending content", DisplayOrder = 8, CreatedAt = now },
+            new PermissionAction { Id = moderateActionId, Name = "Moderate", ActionKey = "Moderate", Description = "Moderate and review content", DisplayOrder = 9, CreatedAt = now },
+            new PermissionAction { Id = manageActionId, Name = "Manage", ActionKey = "Manage", Description = "Full management access", DisplayOrder = 10, CreatedAt = now }
         );
 
         // 4. Seed ModuleFeatures (Module-Feature relationships)
@@ -421,6 +429,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         AddFeatureAction(postsFeatureId, createActionId);
         AddFeatureAction(postsFeatureId, editActionId);
         AddFeatureAction(postsFeatureId, deleteActionId);
+        AddFeatureAction(postsFeatureId, publishActionId);
+        AddFeatureAction(postsFeatureId, unpublishActionId);
         AddFeatureAction(postsFeatureId, manageActionId);
 
         // Categories permissions
@@ -441,6 +451,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         AddFeatureAction(commentsFeatureId, editActionId);
         AddFeatureAction(commentsFeatureId, deleteActionId);
         AddFeatureAction(commentsFeatureId, approveActionId);
+        AddFeatureAction(commentsFeatureId, rejectActionId);
+        AddFeatureAction(commentsFeatureId, moderateActionId);
 
         // Permissions permissions
         AddFeatureAction(permissionsFeatureId, viewActionId);
@@ -470,7 +482,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             );
         }
 
-        // User role gets limited permissions
+        // User role gets limited permissions (can manage their own content)
         var userPermissions = new[]
         {
             featureActionMap[$"{profilesFeatureId}_{viewActionId}"],
@@ -478,10 +490,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             featureActionMap[$"{postsFeatureId}_{viewActionId}"],
             featureActionMap[$"{postsFeatureId}_{createActionId}"],
             featureActionMap[$"{postsFeatureId}_{editActionId}"],
+            featureActionMap[$"{postsFeatureId}_{deleteActionId}"],
+            featureActionMap[$"{postsFeatureId}_{publishActionId}"],
+            featureActionMap[$"{postsFeatureId}_{unpublishActionId}"],
             featureActionMap[$"{categoriesFeatureId}_{viewActionId}"],
             featureActionMap[$"{tagsFeatureId}_{viewActionId}"],
             featureActionMap[$"{commentsFeatureId}_{viewActionId}"],
             featureActionMap[$"{commentsFeatureId}_{createActionId}"],
+            featureActionMap[$"{commentsFeatureId}_{editActionId}"],
+            featureActionMap[$"{commentsFeatureId}_{deleteActionId}"],
             featureActionMap[$"{statisticsFeatureId}_{viewActionId}"]
         };
 

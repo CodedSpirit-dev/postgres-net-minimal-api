@@ -31,6 +31,10 @@ public interface IPostService
 
     Task<bool> DeletePostAsync(Guid id, CancellationToken cancellationToken = default);
 
+    Task<PostResponseDto?> PublishPostAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<PostResponseDto?> UnpublishPostAsync(Guid id, CancellationToken cancellationToken = default);
+
     Task IncrementViewCountAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<List<PopularPostDto>> GetMostViewedPostsAsync(

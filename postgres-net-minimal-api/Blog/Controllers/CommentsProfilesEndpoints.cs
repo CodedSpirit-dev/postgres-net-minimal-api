@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using postgres_net_minimal_api.Blog.Services;
 using postgres_net_minimal_api.DTOs;
+using postgres_net_minimal_api.Authorization.Services;
+using postgres_net_minimal_api.Authorization.Enums;
 
 namespace postgres_net_minimal_api.Blog.Controllers;
 
@@ -45,18 +47,33 @@ public static class CommentsEndpoints
         .Produces(404)
         .WithOpenApi();
 
-        // GET /api/comments/pending - Get pending comments (Admin only)
+        // GET /api/comments/pending - Get pending comments (requires Moderate permission)
         group.MapGet("/pending", async (
             ICommentService commentService,
+            IPermissionChecker permissionChecker,
+            ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            // Check if user has permission to moderate comments
+            var hasPermission = await permissionChecker.HasPermissionAsync(userId, ResourceType.Comments, ActionType.Moderate);
+            if (!hasPermission)
+            {
+                return Results.Forbid();
+            }
+
             var comments = await commentService.GetPendingCommentsAsync(cancellationToken);
             return Results.Ok(comments);
         })
-        .RequireAuthorization(policy => policy.RequireRole("Admin"))
+        .RequireAuthorization()
         .WithName("GetPendingComments")
         .WithSummary("Get pending comments")
-        .WithDescription("Returns all comments awaiting approval. Requires Admin role.")
+        .WithDescription("Returns all comments awaiting approval. Requires Comments.Moderate permission.")
         .Produces<List<CommentResponseDto>>(200)
         .Produces(401)
         .Produces(403)
@@ -66,13 +83,26 @@ public static class CommentsEndpoints
         group.MapPost("/", async (
             CreateCommentRequest request,
             ICommentService commentService,
+            IPermissionChecker permissionChecker,
             ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            // Check if user has permission to create comments
+            var hasPermission = await permissionChecker.HasPermissionAsync(userId, ResourceType.Comments, ActionType.Create);
+            if (!hasPermission)
+            {
+                return Results.Forbid();
+            }
+
             try
             {
-                var authorId = Guid.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
-                var comment = await commentService.CreateCommentAsync(request, authorId, cancellationToken);
+                var comment = await commentService.CreateCommentAsync(request, userId, cancellationToken);
                 return Results.Created($"/api/comments/{comment.Id}", comment);
             }
             catch (InvalidOperationException ex)
@@ -83,10 +113,11 @@ public static class CommentsEndpoints
         .RequireAuthorization()
         .WithName("CreateComment")
         .WithSummary("Create new comment")
-        .WithDescription("Creates a new comment on a post. Requires authentication. Comments require approval.")
+        .WithDescription("Creates a new comment on a post. Requires Comments.Create permission. Comments require approval.")
         .Produces<CommentResponseDto>(201)
         .Produces(400)
         .Produces(401)
+        .Produces(403)
         .WithOpenApi();
 
         // PUT /api/comments/{id}
@@ -94,8 +125,25 @@ public static class CommentsEndpoints
             Guid id,
             UpdateCommentRequest request,
             ICommentService commentService,
+            IPermissionChecker permissionChecker,
+            ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            // Check permission AND ownership (user can edit their own comments OR has Comments.Manage)
+            var canEdit = await permissionChecker.HasPermissionAndOwnsResourceAsync(
+                userId, ResourceType.Comments, ActionType.Edit, id, cancellationToken);
+
+            if (!canEdit)
+            {
+                return Results.Forbid();
+            }
+
             try
             {
                 var comment = await commentService.UpdateCommentAsync(id, request, cancellationToken);
@@ -109,9 +157,11 @@ public static class CommentsEndpoints
         .RequireAuthorization()
         .WithName("UpdateComment")
         .WithSummary("Update comment")
+        .WithDescription("Updates a comment. Requires Comments.Edit permission and ownership, OR Comments.Manage permission.")
         .Produces<CommentResponseDto>(200)
         .Produces(400)
         .Produces(401)
+        .Produces(403)
         .Produces(404)
         .WithOpenApi();
 
@@ -119,15 +169,32 @@ public static class CommentsEndpoints
         group.MapDelete("/{id:guid}", async (
             Guid id,
             ICommentService commentService,
+            IPermissionChecker permissionChecker,
+            ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            // Check permission AND ownership (user can delete their own comments OR has Comments.Manage)
+            var canDelete = await permissionChecker.HasPermissionAndOwnsResourceAsync(
+                userId, ResourceType.Comments, ActionType.Delete, id, cancellationToken);
+
+            if (!canDelete)
+            {
+                return Results.Forbid();
+            }
+
             var deleted = await commentService.DeleteCommentAsync(id, cancellationToken);
             return deleted ? Results.NoContent() : Results.NotFound();
         })
-        .RequireAuthorization(policy => policy.RequireRole("Admin"))
+        .RequireAuthorization()
         .WithName("DeleteComment")
         .WithSummary("Delete comment")
-        .WithDescription("Permanently deletes a comment. Requires Admin role.")
+        .WithDescription("Permanently deletes a comment. Requires Comments.Delete permission and ownership, OR Comments.Manage permission.")
         .Produces(204)
         .Produces(401)
         .Produces(403)
@@ -138,15 +205,30 @@ public static class CommentsEndpoints
         group.MapPost("/{id:guid}/approve", async (
             Guid id,
             ICommentService commentService,
+            IPermissionChecker permissionChecker,
+            ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            // Check if user has permission to approve comments
+            var hasPermission = await permissionChecker.HasPermissionAsync(userId, ResourceType.Comments, ActionType.Approve);
+            if (!hasPermission)
+            {
+                return Results.Forbid();
+            }
+
             var approved = await commentService.ApproveCommentAsync(id, cancellationToken);
             return approved ? Results.Ok(new { message = "Comment approved" }) : Results.NotFound();
         })
-        .RequireAuthorization(policy => policy.RequireRole("Admin"))
+        .RequireAuthorization()
         .WithName("ApproveComment")
         .WithSummary("Approve comment")
-        .WithDescription("Approves a pending comment. Requires Admin role.")
+        .WithDescription("Approves a pending comment. Requires Comments.Approve permission.")
         .Produces(200)
         .Produces(401)
         .Produces(403)
@@ -157,15 +239,30 @@ public static class CommentsEndpoints
         group.MapPost("/{id:guid}/reject", async (
             Guid id,
             ICommentService commentService,
+            IPermissionChecker permissionChecker,
+            ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("UserId");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            // Check if user has permission to reject comments
+            var hasPermission = await permissionChecker.HasPermissionAsync(userId, ResourceType.Comments, ActionType.Reject);
+            if (!hasPermission)
+            {
+                return Results.Forbid();
+            }
+
             var rejected = await commentService.RejectCommentAsync(id, cancellationToken);
             return rejected ? Results.Ok(new { message = "Comment rejected" }) : Results.NotFound();
         })
-        .RequireAuthorization(policy => policy.RequireRole("Admin"))
+        .RequireAuthorization()
         .WithName("RejectComment")
         .WithSummary("Reject comment")
-        .WithDescription("Rejects an approved comment. Requires Admin role.")
+        .WithDescription("Rejects an approved comment. Requires Comments.Reject permission.")
         .Produces(200)
         .Produces(401)
         .Produces(403)
