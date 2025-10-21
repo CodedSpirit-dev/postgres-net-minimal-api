@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using postgres_net_minimal_api.Data;
+using postgres_net_minimal_api.DTOs;
 using postgres_net_minimal_api.Models;
+
+namespace postgres_net_minimal_api.Controllers;
 
 public static class RolesEndpoints
 {
@@ -13,37 +13,78 @@ public static class RolesEndpoints
             .WithTags("Roles")
             .WithOpenApi();
 
-        // Listar roles
-        group.MapGet("/", async (AppDbContext db) =>
-                await db.UserRoles.ToListAsync())
-            .WithName("GetAllRoles")
-            .WithSummary("Obtener todos los roles")
-            .WithDescription("Retorna una lista de todos los roles disponibles en el sistema")
-            .Produces(200)
-            .WithOpenApi();
+        // GET /roles - List all roles
+        group.MapGet("/", async (AppDbContext db, CancellationToken cancellationToken) =>
+        {
+            var roles = await db.UserRoles
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
 
-        // Obtener rol por ID
-        group.MapGet("/{id}", async (Guid id, AppDbContext db) =>
-                await db.UserRoles.FindAsync(id) is { } role ? Results.Ok(role) : Results.NotFound())
-            .WithName("GetRoleById")
-            .WithSummary("Obtener rol por ID")
-            .WithDescription("Retorna un rol específico por su ID único")
-            .Produces(200)
-            .Produces(404)
-            .WithOpenApi();
+            return Results.Ok(roles);
+        })
+        .AllowAnonymous()
+        .WithName("GetAllRoles")
+        .WithSummary("Get all roles")
+        .WithDescription("Returns a list of all available roles in the system")
+        .Produces<List<UserRole>>(200)
+        .WithOpenApi();
 
-        // Crear rol
-        group.MapPost("/", async (UserRole role, AppDbContext db) =>
+        // GET /roles/{id} - Get role by ID
+        group.MapGet("/{id:guid}", async (
+            Guid id,
+            AppDbContext db,
+            CancellationToken cancellationToken) =>
+        {
+            var role = await db.UserRoles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+
+            return role is not null ? Results.Ok(role) : Results.NotFound();
+        })
+        .AllowAnonymous()
+        .WithName("GetRoleById")
+        .WithSummary("Get role by ID")
+        .WithDescription("Returns a specific role by its unique identifier")
+        .Produces<UserRole>(200)
+        .Produces(404)
+        .WithOpenApi();
+
+        // POST /roles - Create role (Admin only)
+        group.MapPost("/", async (
+            CreateRoleRequest request,
+            AppDbContext db,
+            CancellationToken cancellationToken) =>
+        {
+            // Check if role name already exists
+            var nameExists = await db.UserRoles
+                .AsNoTracking()
+                .AnyAsync(r => r.Name.ToLower() == request.Name.ToLower(), cancellationToken);
+
+            if (nameExists)
             {
-                db.UserRoles.Add(role);
-                await db.SaveChangesAsync();
-                return Results.Created($"/roles/{role.Id}", role);
-            })
-            .WithName("CreateRole")
-            .WithSummary("Crear nuevo rol")
-            .WithDescription("Crea un nuevo rol en el sistema")
-            .Produces(201)
-            .Produces(400)
-            .WithOpenApi();
+                return Results.BadRequest(new { error = "Role name already exists" });
+            }
+
+            var role = new UserRole
+            {
+                Id = Guid.NewGuid(),
+                Name = request.Name,
+                Description = request.Description
+            };
+
+            db.UserRoles.Add(role);
+            await db.SaveChangesAsync(cancellationToken);
+
+            return Results.Created($"/roles/{role.Id}", role);
+        })
+        .RequireAuthorization(policy => policy.RequireRole("Admin")) // SECURITY: Only Admin can create roles
+        .WithName("CreateRole")
+        .WithSummary("Create new role")
+        .WithDescription("Creates a new role in the system. Only users with Admin role can perform this action.")
+        .Produces<UserRole>(201)
+        .Produces(400)
+        .Produces(401)
+        .Produces(403)
+        .WithOpenApi();
     }
 }

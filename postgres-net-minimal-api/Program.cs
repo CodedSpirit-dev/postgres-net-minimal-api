@@ -5,6 +5,12 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using postgres_net_minimal_api.Controllers;
 using postgres_net_minimal_api.Data;
+using postgres_net_minimal_api.Services;
+using postgres_net_minimal_api.Authorization;
+using postgres_net_minimal_api.Authorization.Endpoints;
+using postgres_net_minimal_api.Authorization.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Threading.RateLimiting;
 using DotNetEnv;
 
 // Load environment variables from .env file if it exists
@@ -16,9 +22,52 @@ if (File.Exists(envPath))
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Register strongly-typed configuration
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
+
 // Add services to the container
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"), npgsqlOptions =>
+    {
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null);
+        npgsqlOptions.CommandTimeout(30);
+    });
+
+    // Use NoTracking by default for better performance (opt-in when needed)
+    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+});
+
+// Register application services
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
+builder.Services.AddScoped<IPasswordValidator, PasswordValidator>();
+builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+
+// Register blog services
+builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.IPostService, postgres_net_minimal_api.Blog.Services.PostService>();
+builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.ICategoryService, postgres_net_minimal_api.Blog.Services.CategoryService>();
+builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.ITagService, postgres_net_minimal_api.Blog.Services.TagService>();
+builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.ICommentService, postgres_net_minimal_api.Blog.Services.CommentService>();
+builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.IProfileService, postgres_net_minimal_api.Blog.Services.ProfileService>();
+builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.IBlogStatisticsService, postgres_net_minimal_api.Blog.Services.BlogStatisticsService>();
+
+// Register memory cache for permissions
+builder.Services.AddMemoryCache();
+
+// Register permission services
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddScoped<IPermissionChecker, PermissionChecker>();
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+// Register ownership checkers for instance-level permissions
+builder.Services.AddScoped<PostOwnershipChecker>();
+builder.Services.AddScoped<CommentOwnershipChecker>();
+builder.Services.AddScoped<ProfileOwnershipChecker>();
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -27,14 +76,14 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy.WithOrigins(
-                    "http://localhost:3005",    // Tu frontend
-                    "http://localhost:3000",    // Common React port
-                    "http://localhost:5173",    // Common Vite port
-                    "http://localhost:8080"     // Common Vue CLI port
+                    "http://localhost:3005",
+                    "http://localhost:3000",
+                    "http://localhost:5173",
+                    "http://localhost:8080"
                 )
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .AllowCredentials(); // Permite credentials
+                .AllowCredentials();
         });
 });
 
@@ -43,11 +92,39 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontendAll",
         policy =>
         {
-            policy.SetIsOriginAllowed(_ => true)  // ✅ ESTA LÍNEA
-                .AllowAnyHeader()               // ✅ ESTA LÍNEA  
-                .AllowAnyMethod()               // ✅ ESTA LÍNEA
-                .AllowCredentials();            // ✅ ESTA LÍNEA
+            policy.SetIsOriginAllowed(_ => true)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
         });
+});
+
+// Configure Rate Limiting (NEW in .NET 8+)
+builder.Services.AddRateLimiter(options =>
+{
+    // Rate limit for login endpoint to prevent brute force attacks
+    options.AddFixedWindowLimiter("login", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.PermitLimit = 5;
+        opt.QueueLimit = 0;
+    });
+
+    // Global rate limit for API
+    options.AddFixedWindowLimiter("api", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.PermitLimit = 100;
+        opt.QueueLimit = 0;
+    });
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new { error = "Too many requests. Please try again later." },
+            cancellationToken);
+    };
 });
 
 // Configure JWT Authentication
@@ -123,12 +200,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "PostgreSQL Minimal API v1");
-        c.RoutePrefix = string.Empty; // Swagger UI en la raíz
+        c.RoutePrefix = string.Empty; // Swagger UI at root
     });
 }
 
+// Global exception handling middleware
+app.UseExceptionHandler("/error");
+
 // Use CORS before other middleware
 app.UseCors("AllowFrontendAll");
+
+// Add rate limiting middleware
+app.UseRateLimiter();
 
 // Only use HTTPS redirection in production
 if (!app.Environment.IsDevelopment())
@@ -139,9 +222,23 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map endpoints
+// Error endpoint for global exception handling
+app.Map("/error", () => Results.Problem("An error occurred processing your request"));
+
+// Map user management endpoints
 app.MapUsersEndpoints();
 app.MapRolesEndpoints();
 app.MapAuthEndpoints();
+
+// Map blog endpoints
+app.MapPostsEndpoints();
+app.MapCategoriesEndpoints();
+app.MapTagsEndpoints();
+app.MapCommentsEndpoints();
+app.MapProfilesEndpoints();
+app.MapBlogStatisticsEndpoints();
+
+// Map permission endpoints
+app.MapPermissionEndpoints();
 
 app.Run();

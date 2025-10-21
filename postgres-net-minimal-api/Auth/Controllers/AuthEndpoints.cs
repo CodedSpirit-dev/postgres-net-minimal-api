@@ -1,67 +1,71 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using BCrypt.Net;
-using Microsoft.EntityFrameworkCore;
-using postgres_net_minimal_api.Data;
-using postgres_net_minimal_api.Models;
+using System.ComponentModel.DataAnnotations;
+using postgres_net_minimal_api.Services;
+
+namespace postgres_net_minimal_api.Controllers;
 
 public static class AuthEndpoints
 {
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/auth");
+        var group = app.MapGroup("/auth")
+            .WithTags("Authentication")
+            .WithOpenApi();
 
-        // Login - Permite tanto email como username
-        group.MapPost("/login", async (LoginRequest request, AppDbContext db, IConfiguration config) =>
+        // POST /auth/login - Authenticate user and generate JWT token
+        group.MapPost("/login", async (
+            LoginRequest request,
+            IAuthService authService,
+            CancellationToken cancellationToken) =>
         {
-            // Buscar usuario por email o username
-            var user = await db.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Email.ToLower() == request.UsernameOrEmail.ToLower() || u.UserName.ToLower() == request.UsernameOrEmail.ToLower());
-            
-            if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.HashedPassword))
+            var token = await authService.AuthenticateAsync(
+                request.UsernameOrEmail,
+                request.Password,
+                cancellationToken);
+
+            if (token is null)
+            {
                 return Results.Unauthorized();
+            }
 
-            var token = GenerateJwtToken(user, config);
-            return Results.Ok(new { Token = token });
-        });
+            return Results.Ok(new LoginResponse(token));
+        })
+        .RequireRateLimiting("login") // Rate limit to prevent brute force attacks
+        .WithName("Login")
+        .WithSummary("User login")
+        .WithDescription("Authenticates a user with email/username and password. Returns a JWT token on success. Rate limited to 5 attempts per minute.")
+        .Produces<LoginResponse>(200)
+        .Produces(401)
+        .Produces(429)
+        .WithOpenApi();
 
-        // Logout (opcional)
-        group.MapPost("/logout", () => Results.Ok(new { Message = "Logout exitoso" })).RequireAuthorization();
-    }
-
-    private static string GenerateJwtToken(User user, IConfiguration config)
-    {
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]));
-        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.UserName), // Agregado username al token
-            new Claim(ClaimTypes.Role, user.Role.Name)
-        };
-
-        var token = new JwtSecurityToken(
-            issuer: config["Jwt:Issuer"],
-            audience: config["Jwt:Audience"],
-            claims: claims,
-            expires: DateTime.Now.AddHours(1),
-            signingCredentials: credentials
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        // POST /auth/logout - Logout endpoint (placeholder for token blacklisting in production)
+        group.MapPost("/logout", () =>
+            Results.Ok(new { Message = "Logout successful. Please discard your token client-side." }))
+        .RequireAuthorization()
+        .WithName("Logout")
+        .WithSummary("User logout")
+        .WithDescription("Logout endpoint. In a stateless JWT system, the client should discard the token. In production, implement token blacklisting.")
+        .Produces(200)
+        .Produces(401)
+        .WithOpenApi();
     }
 }
 
-public class LoginRequest
+/// <summary>
+/// Login request DTO
+/// </summary>
+public record LoginRequest
 {
-    public string UsernameOrEmail { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+    [Required]
+    [StringLength(255, MinimumLength = 3)]
+    public required string UsernameOrEmail { get; init; }
+
+    [Required]
+    [StringLength(100, MinimumLength = 8)]
+    public required string Password { get; init; }
 }
+
+/// <summary>
+/// Login response DTO
+/// </summary>
+public record LoginResponse(string Token);
