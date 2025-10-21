@@ -6,6 +6,10 @@ using System.Text;
 using postgres_net_minimal_api.Controllers;
 using postgres_net_minimal_api.Data;
 using postgres_net_minimal_api.Services;
+using postgres_net_minimal_api.Authorization;
+using postgres_net_minimal_api.Authorization.Endpoints;
+using postgres_net_minimal_api.Authorization.Services;
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.RateLimiting;
 using DotNetEnv;
 
@@ -51,6 +55,13 @@ builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.ITagService, p
 builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.ICommentService, postgres_net_minimal_api.Blog.Services.CommentService>();
 builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.IProfileService, postgres_net_minimal_api.Blog.Services.ProfileService>();
 builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.IBlogStatisticsService, postgres_net_minimal_api.Blog.Services.BlogStatisticsService>();
+
+// Register memory cache for permissions
+builder.Services.AddMemoryCache();
+
+// Register permission services
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -220,5 +231,8 @@ app.MapTagsEndpoints();
 app.MapCommentsEndpoints();
 app.MapProfilesEndpoints();
 app.MapBlogStatisticsEndpoints();
+
+// Map permission endpoints
+app.MapPermissionEndpoints();
 
 app.Run();
