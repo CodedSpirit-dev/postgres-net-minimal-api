@@ -8,9 +8,17 @@ namespace postgres_net_minimal_api.Data;
 /// </summary>
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    // User management
     public DbSet<User> Users { get; set; }
-
     public DbSet<UserRole> UserRoles { get; set; }
+    public DbSet<Profile> Profiles { get; set; }
+
+    // Blog entities
+    public DbSet<Post> Posts { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<Tag> Tags { get; set; }
+    public DbSet<PostTag> PostTags { get; set; }
+    public DbSet<Comment> Comments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -62,5 +70,122 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<User>()
             .HasIndex(u => new { u.RoleId, u.LastName })
             .HasDatabaseName("IX_Users_RoleId_LastName");
+
+        // Configure Blog entities relationships
+        ConfigureBlogEntities(modelBuilder);
+
+        // Seed blog data
+        SeedBlogData(modelBuilder);
+    }
+
+    private static void ConfigureBlogEntities(ModelBuilder modelBuilder)
+    {
+        // Profile - One-to-One with User
+        modelBuilder.Entity<Profile>()
+            .HasOne(p => p.User)
+            .WithOne()
+            .HasForeignKey<Profile>(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Post - Many-to-One with User (Author)
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Author)
+            .WithMany()
+            .HasForeignKey(p => p.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Post - Many-to-One with Category
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Category)
+            .WithMany(c => c.Posts)
+            .HasForeignKey(p => p.CategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // PostTag - Composite Primary Key
+        modelBuilder.Entity<PostTag>()
+            .HasKey(pt => new { pt.PostId, pt.TagId });
+
+        // PostTag - Many-to-One with Post
+        modelBuilder.Entity<PostTag>()
+            .HasOne(pt => pt.Post)
+            .WithMany(p => p.PostTags)
+            .HasForeignKey(pt => pt.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // PostTag - Many-to-One with Tag
+        modelBuilder.Entity<PostTag>()
+            .HasOne(pt => pt.Tag)
+            .WithMany(t => t.PostTags)
+            .HasForeignKey(pt => pt.TagId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Comment - Many-to-One with Post
+        modelBuilder.Entity<Comment>()
+            .HasOne(c => c.Post)
+            .WithMany(p => p.Comments)
+            .HasForeignKey(c => c.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Comment - Many-to-One with User (Author)
+        modelBuilder.Entity<Comment>()
+            .HasOne(c => c.Author)
+            .WithMany()
+            .HasForeignKey(c => c.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Comment - Self-referencing for nested comments
+        modelBuilder.Entity<Comment>()
+            .HasOne(c => c.ParentComment)
+            .WithMany(c => c.Replies)
+            .HasForeignKey(c => c.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Performance indexes
+        modelBuilder.Entity<Post>()
+            .HasIndex(p => new { p.IsPublished, p.PublishedAt })
+            .HasDatabaseName("IX_Posts_Published_PublishedAt");
+
+        modelBuilder.Entity<Comment>()
+            .HasIndex(c => new { c.PostId, c.IsApproved })
+            .HasDatabaseName("IX_Comments_PostId_IsApproved");
+    }
+
+    private static void SeedBlogData(ModelBuilder modelBuilder)
+    {
+        var techCategoryId = Guid.Parse("C1111111-1111-1111-1111-111111111111");
+        var tutorialsCategoryId = Guid.Parse("C2222222-2222-2222-2222-222222222222");
+
+        // Seed Categories
+        modelBuilder.Entity<Category>().HasData(
+            new Category
+            {
+                Id = techCategoryId,
+                Name = "Technology",
+                Slug = "technology",
+                Description = "Posts about technology and programming",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Category
+            {
+                Id = tutorialsCategoryId,
+                Name = "Tutorials",
+                Slug = "tutorials",
+                Description = "Step-by-step tutorials and guides",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            }
+        );
+
+        // Seed Tags
+        var csharpTagId = Guid.Parse("T1111111-1111-1111-1111-111111111111");
+        var dotnetTagId = Guid.Parse("T2222222-2222-2222-2222-222222222222");
+        var postgresTagId = Guid.Parse("T3333333-3333-3333-3333-333333333333");
+
+        modelBuilder.Entity<Tag>().HasData(
+            new Tag { Id = csharpTagId, Name = "C#", Slug = "csharp", CreatedAt = DateTime.UtcNow },
+            new Tag { Id = dotnetTagId, Name = ".NET", Slug = "dotnet", CreatedAt = DateTime.UtcNow },
+            new Tag { Id = postgresTagId, Name = "PostgreSQL", Slug = "postgresql", CreatedAt = DateTime.UtcNow }
+        );
     }
 }

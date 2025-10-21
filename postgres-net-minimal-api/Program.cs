@@ -44,6 +44,14 @@ builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<IPasswordValidator, PasswordValidator>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
+// Register blog services
+builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.IPostService, postgres_net_minimal_api.Blog.Services.PostService>();
+builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.ICategoryService, postgres_net_minimal_api.Blog.Services.CategoryService>();
+builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.ITagService, postgres_net_minimal_api.Blog.Services.TagService>();
+builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.ICommentService, postgres_net_minimal_api.Blog.Services.CommentService>();
+builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.IProfileService, postgres_net_minimal_api.Blog.Services.ProfileService>();
+builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.IBlogStatisticsService, postgres_net_minimal_api.Blog.Services.BlogStatisticsService>();
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {
@@ -200,9 +208,17 @@ app.UseAuthorization();
 // Error endpoint for global exception handling
 app.Map("/error", () => Results.Problem("An error occurred processing your request"));
 
-// Map endpoints
+// Map user management endpoints
 app.MapUsersEndpoints();
 app.MapRolesEndpoints();
 app.MapAuthEndpoints();
+
+// Map blog endpoints
+app.MapPostsEndpoints();
+app.MapCategoriesEndpoints();
+app.MapTagsEndpoints();
+app.MapCommentsEndpoints();
+app.MapProfilesEndpoints();
+app.MapBlogStatisticsEndpoints();
 
 app.Run();
