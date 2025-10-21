@@ -34,23 +34,39 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         base.OnModelCreating(modelBuilder);
 
         // Fixed GUIDs for roles
+        var superAdminRoleId = Guid.Parse("00000000-0000-0000-0000-000000000000");
         var adminRoleId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var userRoleId = Guid.Parse("22222222-2222-2222-2222-222222222222");
         var guestRoleId = Guid.Parse("33333333-3333-3333-3333-333333333333");
 
         // Seed data for roles
         modelBuilder.Entity<UserRole>().HasData(
+            new UserRole { Id = superAdminRoleId, Name = "SuperAdmin", Description = "Super administrator with unrestricted access to everything" },
             new UserRole { Id = adminRoleId, Name = "Admin", Description = "System administrator" },
             new UserRole { Id = userRoleId, Name = "User", Description = "Standard user" },
             new UserRole { Id = guestRoleId, Name = "Guest", Description = "Guest user with limited access" }
         );
 
         // Fixed GUIDs for users
+        var superAdminUserId = Guid.Parse("S0000000-0000-0000-0000-000000000000");
         var adminUserId = Guid.Parse("A1111111-1111-1111-1111-111111111111");
         var standardUserId = Guid.Parse("B2222222-2222-2222-2222-222222222222");
+        var guestUserId = Guid.Parse("C3333333-3333-3333-3333-333333333333");
 
         // Pre-generated BCrypt hashes for seed data (static hashes to avoid runtime hashing)
+        // All passwords are hashed version of "password123" for testing purposes
         modelBuilder.Entity<User>().HasData(
+            new User
+            {
+                Id = superAdminUserId,
+                UserName = "SuperAdmin",
+                FirstName = "Super",
+                LastName = "Administrator",
+                Email = "superadmin@example.com",
+                HashedPassword = "$2a$11$67rVUGbvftj.YcqUIiQGSeg47kWVtGJXZR8ZbESPh7VG5glAAtDqe",
+                DateOfBirth = new DateOnly(1985, 1, 1),
+                RoleId = superAdminRoleId
+            },
             new User
             {
                 Id = adminUserId,
@@ -72,6 +88,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 HashedPassword = "yo$2a$11$5ByfQRylb6t1ucfmqMASC.OGbS4Qp7sPq4Dpc1YC24oiG6usM26PK",
                 DateOfBirth = new DateOnly(1995, 5, 15),
                 RoleId = userRoleId
+            },
+            new User
+            {
+                Id = guestUserId,
+                UserName = "Guest",
+                FirstName = "Guest",
+                LastName = "User",
+                Email = "guest@example.com",
+                HashedPassword = "$2a$11$67rVUGbvftj.YcqUIiQGSeg47kWVtGJXZR8ZbESPh7VG5glAAtDqe",
+                DateOfBirth = new DateOnly(2000, 1, 1),
+                RoleId = guestRoleId
             }
         );
 
@@ -169,9 +196,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         var now = DateTime.UtcNow;
 
-        // IDs for existing users
+        // IDs for users
+        var superAdminUserId = Guid.Parse("S0000000-0000-0000-0000-000000000000");
         var adminUserId = Guid.Parse("A1111111-1111-1111-1111-111111111111");
         var standardUserId = Guid.Parse("B2222222-2222-2222-2222-222222222222");
+        var guestUserId = Guid.Parse("C3333333-3333-3333-3333-333333333333");
 
         var techCategoryId = Guid.Parse("C1111111-1111-1111-1111-111111111111");
         var tutorialsCategoryId = Guid.Parse("C2222222-2222-2222-2222-222222222222");
@@ -210,10 +239,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         );
 
         // Seed Profiles
+        var superAdminProfileId = Guid.Parse("P0000000-0000-0000-0000-000000000000");
         var adminProfileId = Guid.Parse("P1111111-1111-1111-1111-111111111111");
         var userProfileId = Guid.Parse("P2222222-2222-2222-2222-222222222222");
+        var guestProfileId = Guid.Parse("P3333333-3333-3333-3333-333333333333");
 
         modelBuilder.Entity<Profile>().HasData(
+            new Profile
+            {
+                Id = superAdminProfileId,
+                UserId = superAdminUserId,
+                Bio = "Super Administrator with unrestricted access to all system features. Responsible for platform management, user moderation, and system-wide configurations.",
+                Website = "https://platform.example.com",
+                TwitterHandle = "@platform_admin",
+                GitHubUsername = "superadmin",
+                CreatedAt = now,
+                UpdatedAt = now
+            },
             new Profile
             {
                 Id = adminProfileId,
@@ -234,6 +276,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 TwitterHandle = "@johndoe_dev",
                 GitHubUsername = "johndoe",
                 LinkedInUrl = "https://linkedin.com/in/johndoe",
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Profile
+            {
+                Id = guestProfileId,
+                UserId = guestUserId,
+                Bio = "Guest user exploring the platform features.",
+                Website = null,
+                TwitterHandle = null,
+                GitHubUsername = null,
                 CreatedAt = now,
                 UpdatedAt = now
             }
@@ -661,12 +714,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // Statistics permissions
         AddFeatureAction(statisticsFeatureId, viewActionId);
 
-        // 6. Seed RolePermissions (Assign permissions to Admin role)
+        // 6. Seed RolePermissions (Assign permissions to roles)
+        var superAdminRoleId = Guid.Parse("00000000-0000-0000-0000-000000000000");
         var adminRoleId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var userRoleId = Guid.Parse("22222222-2222-2222-2222-222222222222");
         var guestRoleId = Guid.Parse("33333333-3333-3333-3333-333333333333");
 
         var rolePermissionId = 1;
+
+        // SuperAdmin gets ALL permissions (all FeatureActions) - Unrestricted access
+        foreach (var fa in featureActionMap.Values)
+        {
+            modelBuilder.Entity<RolePermission>().HasData(
+                new RolePermission
+                {
+                    Id = rolePermissionId++,
+                    RoleId = superAdminRoleId,
+                    FeatureActionId = fa,
+                    CreatedAt = now
+                }
+            );
+        }
 
         // Admin gets ALL permissions (all FeatureActions)
         foreach (var fa in featureActionMap.Values)
