@@ -167,6 +167,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     private static void SeedBlogData(ModelBuilder modelBuilder)
     {
+        var now = DateTime.UtcNow;
+
+        // IDs for existing users
+        var adminUserId = Guid.Parse("A1111111-1111-1111-1111-111111111111");
+        var standardUserId = Guid.Parse("B2222222-2222-2222-2222-222222222222");
+
         var techCategoryId = Guid.Parse("C1111111-1111-1111-1111-111111111111");
         var tutorialsCategoryId = Guid.Parse("C2222222-2222-2222-2222-222222222222");
 
@@ -178,8 +184,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 Name = "Technology",
                 Slug = "technology",
                 Description = "Posts about technology and programming",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             },
             new Category
             {
@@ -187,8 +193,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 Name = "Tutorials",
                 Slug = "tutorials",
                 Description = "Step-by-step tutorials and guides",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             }
         );
 
@@ -198,9 +204,203 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         var postgresTagId = Guid.Parse("T3333333-3333-3333-3333-333333333333");
 
         modelBuilder.Entity<Tag>().HasData(
-            new Tag { Id = csharpTagId, Name = "C#", Slug = "csharp", CreatedAt = DateTime.UtcNow },
-            new Tag { Id = dotnetTagId, Name = ".NET", Slug = "dotnet", CreatedAt = DateTime.UtcNow },
-            new Tag { Id = postgresTagId, Name = "PostgreSQL", Slug = "postgresql", CreatedAt = DateTime.UtcNow }
+            new Tag { Id = csharpTagId, Name = "C#", Slug = "csharp", CreatedAt = now },
+            new Tag { Id = dotnetTagId, Name = ".NET", Slug = "dotnet", CreatedAt = now },
+            new Tag { Id = postgresTagId, Name = "PostgreSQL", Slug = "postgresql", CreatedAt = now }
+        );
+
+        // Seed Profiles
+        var adminProfileId = Guid.Parse("P1111111-1111-1111-1111-111111111111");
+        var userProfileId = Guid.Parse("P2222222-2222-2222-2222-222222222222");
+
+        modelBuilder.Entity<Profile>().HasData(
+            new Profile
+            {
+                Id = adminProfileId,
+                UserId = adminUserId,
+                Bio = "System administrator and technical writer. Passionate about .NET technologies and modern software architecture.",
+                Website = "https://example.com/admin",
+                TwitterHandle = "@admin_dev",
+                GitHubUsername = "admin-developer",
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Profile
+            {
+                Id = userProfileId,
+                UserId = standardUserId,
+                Bio = "Software developer specializing in C# and PostgreSQL. Love building scalable web applications.",
+                Website = "https://johndoe.dev",
+                TwitterHandle = "@johndoe_dev",
+                GitHubUsername = "johndoe",
+                LinkedInUrl = "https://linkedin.com/in/johndoe",
+                CreatedAt = now,
+                UpdatedAt = now
+            }
+        );
+
+        // Seed Posts
+        var post1Id = Guid.Parse("POST1111-1111-1111-1111-111111111111");
+        var post2Id = Guid.Parse("POST2222-2222-2222-2222-222222222222");
+        var post3Id = Guid.Parse("POST3333-3333-3333-3333-333333333333");
+        var post4Id = Guid.Parse("POST4444-4444-4444-4444-444444444444");
+
+        modelBuilder.Entity<Post>().HasData(
+            new Post
+            {
+                Id = post1Id,
+                Title = "Getting Started with .NET 9 and PostgreSQL",
+                Slug = "getting-started-with-net9-and-postgresql",
+                Excerpt = "Learn how to build modern web APIs using .NET 9 and PostgreSQL with this comprehensive guide.",
+                Content = "<p>In this tutorial, we'll explore how to build a modern web API using .NET 9 and PostgreSQL. We'll cover Entity Framework Core 9, minimal APIs, and best practices for database design.</p><p>PostgreSQL is a powerful, open-source relational database that pairs perfectly with .NET for building scalable applications.</p>",
+                FeaturedImageUrl = "https://images.example.com/net9-postgres.jpg",
+                IsPublished = true,
+                PublishedAt = now.AddDays(-7),
+                ViewCount = 1250,
+                AuthorId = adminUserId,
+                CategoryId = techCategoryId,
+                CreatedAt = now.AddDays(-7),
+                UpdatedAt = now.AddDays(-7)
+            },
+            new Post
+            {
+                Id = post2Id,
+                Title = "Advanced RBAC Patterns in ASP.NET Core",
+                Slug = "advanced-rbac-patterns-aspnet-core",
+                Excerpt = "Implementing fine-grained role-based access control with resource-action permissions in modern .NET applications.",
+                Content = "<p>Role-Based Access Control (RBAC) is essential for securing modern applications. In this post, we dive deep into implementing granular permissions using the Resource-Action pattern.</p><p>We'll cover instance-level permissions, ownership validation, and how to combine type-level and instance-level authorization.</p>",
+                FeaturedImageUrl = "https://images.example.com/rbac-pattern.jpg",
+                IsPublished = true,
+                PublishedAt = now.AddDays(-3),
+                ViewCount = 867,
+                AuthorId = standardUserId,
+                CategoryId = tutorialsCategoryId,
+                CreatedAt = now.AddDays(-3),
+                UpdatedAt = now.AddDays(-3)
+            },
+            new Post
+            {
+                Id = post3Id,
+                Title = "Building a Blog System with Minimal APIs",
+                Slug = "building-blog-system-minimal-apis",
+                Excerpt = "Step-by-step guide to creating a complete blog system using .NET 9 Minimal APIs.",
+                Content = "<p>Minimal APIs in .NET provide a streamlined way to build HTTP APIs with minimal ceremony. In this tutorial, we'll build a complete blog system from scratch.</p><p>Topics covered: Posts, Categories, Tags, Comments, SEO-friendly slugs, and more!</p>",
+                FeaturedImageUrl = "https://images.example.com/minimal-api-blog.jpg",
+                IsPublished = true,
+                PublishedAt = now.AddDays(-1),
+                ViewCount = 423,
+                AuthorId = standardUserId,
+                CategoryId = tutorialsCategoryId,
+                CreatedAt = now.AddDays(-1),
+                UpdatedAt = now.AddDays(-1)
+            },
+            new Post
+            {
+                Id = post4Id,
+                Title = "Draft: Performance Optimization Techniques",
+                Slug = "draft-performance-optimization-techniques",
+                Excerpt = "Exploring various performance optimization strategies for .NET applications (Work in Progress).",
+                Content = "<p>This is a draft post exploring performance optimization techniques including caching, database query optimization, and async patterns.</p>",
+                FeaturedImageUrl = null,
+                IsPublished = false,
+                PublishedAt = null,
+                ViewCount = 0,
+                AuthorId = adminUserId,
+                CategoryId = techCategoryId,
+                CreatedAt = now,
+                UpdatedAt = now
+            }
+        );
+
+        // Seed PostTags
+        modelBuilder.Entity<PostTag>().HasData(
+            // Post 1: .NET 9 and PostgreSQL - tags: .NET, PostgreSQL
+            new PostTag { PostId = post1Id, TagId = dotnetTagId },
+            new PostTag { PostId = post1Id, TagId = postgresTagId },
+
+            // Post 2: RBAC Patterns - tags: .NET, C#
+            new PostTag { PostId = post2Id, TagId = dotnetTagId },
+            new PostTag { PostId = post2Id, TagId = csharpTagId },
+
+            // Post 3: Blog System - tags: .NET, C#
+            new PostTag { PostId = post3Id, TagId = dotnetTagId },
+            new PostTag { PostId = post3Id, TagId = csharpTagId },
+
+            // Post 4: Performance (draft) - tags: .NET, C#
+            new PostTag { PostId = post4Id, TagId = dotnetTagId },
+            new PostTag { PostId = post4Id, TagId = csharpTagId }
+        );
+
+        // Seed Comments
+        var comment1Id = Guid.Parse("COMM1111-1111-1111-1111-111111111111");
+        var comment2Id = Guid.Parse("COMM2222-2222-2222-2222-222222222222");
+        var comment3Id = Guid.Parse("COMM3333-3333-3333-3333-333333333333");
+        var comment4Id = Guid.Parse("COMM4444-4444-4444-4444-444444444444");
+        var comment5Id = Guid.Parse("COMM5555-5555-5555-5555-555555555555");
+
+        modelBuilder.Entity<Comment>().HasData(
+            // Comments on Post 1 (Getting Started with .NET 9 and PostgreSQL)
+            new Comment
+            {
+                Id = comment1Id,
+                PostId = post1Id,
+                AuthorId = standardUserId,
+                Content = "Great article! The integration between EF Core 9 and PostgreSQL has really improved. Thanks for sharing!",
+                IsApproved = true,
+                ParentId = null,
+                CreatedAt = now.AddDays(-6),
+                UpdatedAt = now.AddDays(-6)
+            },
+            new Comment
+            {
+                Id = comment2Id,
+                PostId = post1Id,
+                AuthorId = adminUserId,
+                Content = "Thank you! I'm glad you found it helpful. Let me know if you have any questions.",
+                IsApproved = true,
+                ParentId = comment1Id, // Reply to comment1
+                CreatedAt = now.AddDays(-6).AddHours(2),
+                UpdatedAt = now.AddDays(-6).AddHours(2)
+            },
+
+            // Comments on Post 2 (Advanced RBAC Patterns)
+            new Comment
+            {
+                Id = comment3Id,
+                PostId = post2Id,
+                AuthorId = adminUserId,
+                Content = "This is exactly what I was looking for! The Resource-Action pattern makes so much sense for complex authorization scenarios.",
+                IsApproved = true,
+                ParentId = null,
+                CreatedAt = now.AddDays(-2),
+                UpdatedAt = now.AddDays(-2)
+            },
+
+            // Comments on Post 3 (Building a Blog System)
+            new Comment
+            {
+                Id = comment4Id,
+                PostId = post3Id,
+                AuthorId = adminUserId,
+                Content = "Minimal APIs are really powerful for this use case. Would love to see more about SEO optimization!",
+                IsApproved = true,
+                ParentId = null,
+                CreatedAt = now.AddHours(-12),
+                UpdatedAt = now.AddHours(-12)
+            },
+
+            // Pending comment (not approved yet)
+            new Comment
+            {
+                Id = comment5Id,
+                PostId = post3Id,
+                AuthorId = standardUserId,
+                Content = "I'm planning to implement this for my project. Do you have the source code available on GitHub?",
+                IsApproved = false, // Pending approval
+                ParentId = null,
+                CreatedAt = now.AddHours(-2),
+                UpdatedAt = now.AddHours(-2)
+            }
         );
     }
 
