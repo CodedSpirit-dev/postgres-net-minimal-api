@@ -420,6 +420,20 @@ Todos los usuarios siguen el mismo patrón:
 
 ---
 
+## Related Documentation
+
+- **[Login Endpoint](./LOGIN_ENDPOINT.md)** - Use these credentials to test login
+- **[Registration Endpoint](./REGISTRATION_ENDPOINT.md)** - Create new test users
+- **[Blog System](./BLOG_SYSTEM.md)** - Complete RBAC permission system
+- **[Security](./SECURITY.md)** - Security best practices
+- **[📖 Documentation Index](./INDEX.md)** - Return to main documentation index
+
+---
+
 **Fecha de creación**: 2025-10-21
 **Última actualización**: 2025-10-21
 **Versión del sistema**: .NET 9 + PostgreSQL
+
+---
+
+**[⬅️ Back to Documentation Index](./INDEX.md)**

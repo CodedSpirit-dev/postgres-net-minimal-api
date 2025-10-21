@@ -787,9 +787,23 @@ POST /auth/verify-2fa
 
 ---
 
+## Related Endpoints
+
+- **[Registration Endpoint](./REGISTRATION_ENDPOINT.md)** - To create a new user account
+- **[Change Password Endpoint](./CHANGE_PASSWORD_ENDPOINT.md)** - To change password after login
+- **[Update Profile Endpoint](./UPDATE_PROFILE_ENDPOINT.md)** - To update profile information
+- **[Seed Data Credentials](./SEED_DATA_CREDENTIALS.md)** - Development user credentials for testing
+- **[📖 Documentation Index](./INDEX.md)** - Return to main documentation index
+
+---
+
 **Implementado en**: Branch `claude/net9-postgres-continue-011CULuK32NnLRSQN34ToRgQ`
 **Archivos**:
 - `Auth/Controllers/AuthEndpoints.cs`
 - `Services/IAuthService.cs`
 - `Services/AuthService.cs`
 **Fecha**: 2025-10-21
+
+---
+
+**[⬅️ Back to Documentation Index](./INDEX.md)**

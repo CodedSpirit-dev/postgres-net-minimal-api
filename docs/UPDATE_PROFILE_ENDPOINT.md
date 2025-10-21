@@ -337,9 +337,11 @@ If a SuperAdmin or Admin needs to update a user's role or other privileged infor
 
 ## Related Endpoints
 
-- [Change Password Endpoint](./CHANGE_PASSWORD_ENDPOINT.md) - To change password
-- [Login Endpoint](./LOGIN_ENDPOINT.md) - To obtain a JWT token
-- [GET /users/{id}](./README.md) - To view user details
+- **[Change Password Endpoint](./CHANGE_PASSWORD_ENDPOINT.md)** - To change password
+- **[Login Endpoint](./LOGIN_ENDPOINT.md)** - To obtain a JWT token
+- **[Registration Endpoint](./REGISTRATION_ENDPOINT.md)** - To register a new user
+- **[Seed Data Credentials](./SEED_DATA_CREDENTIALS.md)** - Development user credentials
+- **[📖 Documentation Index](./INDEX.md)** - Return to main documentation index
 
 ## Use Cases
 
@@ -398,3 +400,7 @@ curl -X PUT http://localhost:5000/users/me \
     "email": "user@example.com"
   }'
 ```
+
+---
+
+**[⬅️ Back to Documentation Index](./INDEX.md)**

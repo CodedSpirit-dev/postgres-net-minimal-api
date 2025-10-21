@@ -127,3 +127,16 @@ If you discover a security vulnerability, please email security@example.com with
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [.NET Security Best Practices](https://docs.microsoft.com/en-us/aspnet/core/security/)
 - [JWT Best Practices](https://tools.ietf.org/html/rfc8725)
+
+---
+
+## Related Documentation
+
+- **[Seed Data Credentials](./SEED_DATA_CREDENTIALS.md)** - Development credentials (change for production!)
+- **[Blog System](./BLOG_SYSTEM.md)** - Complete system architecture
+- **[Login Endpoint](./LOGIN_ENDPOINT.md)** - Authentication endpoint documentation
+- **[📖 Documentation Index](./INDEX.md)** - Return to main documentation index
+
+---
+
+**[⬅️ Back to Documentation Index](./INDEX.md)**

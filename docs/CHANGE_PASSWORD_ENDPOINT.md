@@ -238,11 +238,17 @@ except Exception as e:
 
 ## Related Endpoints
 
-- [Login Endpoint](./LOGIN_ENDPOINT.md) - To obtain a new JWT token after password change
-- [Update Profile Endpoint](./UPDATE_PROFILE_ENDPOINT.md) - To update other profile information
+- **[Login Endpoint](./LOGIN_ENDPOINT.md)** - To obtain a new JWT token after password change
+- **[Update Profile Endpoint](./UPDATE_PROFILE_ENDPOINT.md)** - To update other profile information
+- **[Seed Data Credentials](./SEED_DATA_CREDENTIALS.md)** - Development user credentials
+- **[📖 Documentation Index](./INDEX.md)** - Return to main documentation index
 
 ## Notes
 
 - After changing the password, the user should log in again with the new password to get a fresh JWT token
 - The current JWT token remains valid until it expires naturally
 - In production, consider implementing token invalidation upon password change for enhanced security
+
+---
+
+**[⬅️ Back to Documentation Index](./INDEX.md)**

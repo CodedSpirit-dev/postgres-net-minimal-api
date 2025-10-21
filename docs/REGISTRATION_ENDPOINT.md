@@ -457,6 +457,16 @@ curl -X POST http://localhost:5000/auth/register \
 
 ---
 
+## Related Endpoints
+
+- **[Login Endpoint](./LOGIN_ENDPOINT.md)** - To authenticate with existing account
+- **[Change Password Endpoint](./CHANGE_PASSWORD_ENDPOINT.md)** - To change password after registration
+- **[Update Profile Endpoint](./UPDATE_PROFILE_ENDPOINT.md)** - To update profile information
+- **[Seed Data Credentials](./SEED_DATA_CREDENTIALS.md)** - Development user credentials
+- **[📖 Documentation Index](./INDEX.md)** - Return to main documentation index
+
+---
+
 ## 📝 Notas Importantes
 
 1. **El token JWT se genera automáticamente**: No es necesario hacer un segundo request a `/auth/login`
@@ -474,3 +484,7 @@ curl -X POST http://localhost:5000/auth/register \
 **Implementado en**: Branch `claude/net9-postgres-continue-011CULuK32NnLRSQN34ToRgQ`
 **Archivo**: `Auth/Controllers/AuthEndpoints.cs`
 **Fecha**: 2025-10-21
+
+---
+
+**[⬅️ Back to Documentation Index](./INDEX.md)**

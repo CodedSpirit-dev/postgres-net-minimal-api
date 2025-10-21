@@ -163,6 +163,16 @@ The migration automatically creates test users and roles:
 
 ## 📚 API Documentation
 
+### 📖 Complete Documentation
+
+Para documentación completa y detallada del proyecto, consulta la **[Carpeta de Documentación (docs/)](./docs/INDEX.md)**:
+
+- **[Índice Maestro de Documentación](./docs/INDEX.md)** - Guía completa con enlaces a toda la documentación
+- **[Autenticación y Endpoints](./docs/INDEX.md#-autenticación-y-autorización)** - Login, registro, cambio de contraseña
+- **[Sistema de Blog](./docs/BLOG_SYSTEM.md)** - Arquitectura RBAC granular
+- **[Credenciales de Desarrollo](./docs/SEED_DATA_CREDENTIALS.md)** - Usuarios y contraseñas de prueba
+- **[Seguridad](./docs/SECURITY.md)** - Mejores prácticas de seguridad
+
 ### Swagger UI
 Access interactive API documentation at: **http://localhost:5174**
 
@@ -174,18 +184,34 @@ The Swagger UI allows you to:
 
 ### API Endpoints Overview
 
+#### Authentication Endpoints
+
+| Method | Endpoint | Description | Auth Required | Documentación |
+|--------|----------|-------------|---------------|---------------|
+| POST | `/auth/register` | Register new user (auto role "User") | No | [📄 Docs](./docs/REGISTRATION_ENDPOINT.md) |
+| POST | `/auth/login` | Authenticate user and get JWT token | No | [📄 Docs](./docs/LOGIN_ENDPOINT.md) |
+| POST | `/auth/change-password` | Change user password | Yes | [📄 Docs](./docs/CHANGE_PASSWORD_ENDPOINT.md) |
+| POST | `/auth/logout` | Logout (client-side token discard) | Yes | - |
+
+#### User Management Endpoints
+
+| Method | Endpoint | Description | Auth Required | Documentación |
+|--------|----------|-------------|---------------|---------------|
+| GET | `/users` | Get all users with pagination | No | - |
+| GET | `/users/{id}` | Get user by ID | No | - |
+| POST | `/users` | Create new user (public registration) | No | - |
+| PUT | `/users/me` | Update own profile | Yes | [📄 Docs](./docs/UPDATE_PROFILE_ENDPOINT.md) |
+| PUT | `/users/{id}` | Update user (Admin only) | Yes (Admin) | - |
+| DELETE | `/users/{id}` | Delete user (Admin only) | Yes (Admin) | - |
+
+#### Role Management Endpoints
+
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| POST | `/auth/login` | Authenticate user and get JWT token | No |
-| GET | `/users` | Get all users with roles | No* |
-| GET | `/users/{id}` | Get user by ID | No* |
-| POST | `/users` | Create new user | No* |
-| PUT | `/users/{id}` | Update user | No* |
-| DELETE | `/users/{id}` | Delete user | No* |
-| GET | `/roles` | Get all roles | No* |
-| GET | `/roles/{id}` | Get role by ID | No* |
+| GET | `/roles` | Get all roles | No |
+| GET | `/roles/{id}` | Get role by ID | No |
 
-*_Authentication middleware not yet implemented (see TODO)_
+**Credenciales de prueba**: Ver [SEED_DATA_CREDENTIALS.md](./docs/SEED_DATA_CREDENTIALS.md)
 
 ### Authentication Endpoints
 
