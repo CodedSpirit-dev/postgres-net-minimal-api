@@ -100,4 +100,38 @@ public class AuthService(
         // Return token and user data
         return new AuthenticationResult(token, user.ToDto());
     }
+
+    public async Task<bool> ChangePasswordAsync(
+        Guid userId,
+        string currentPassword,
+        string newPassword,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+        {
+            return false;
+        }
+
+        // Find user
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user is null)
+        {
+            return false;
+        }
+
+        // Verify current password
+        if (!_passwordHasher.VerifyPassword(currentPassword, user.HashedPassword))
+        {
+            return false;
+        }
+
+        // Hash new password
+        user.HashedPassword = _passwordHasher.HashPassword(newPassword);
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
 }

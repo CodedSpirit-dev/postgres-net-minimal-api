@@ -98,6 +98,47 @@ public static class AuthEndpoints
         .Produces(200)
         .Produces(401)
         .WithOpenApi();
+
+        // POST /auth/change-password - Change user password
+        group.MapPost("/change-password", async (
+            ChangePasswordRequest request,
+            IAuthService authService,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            // Extract user ID from JWT claims
+            var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Results.Json(
+                    new { success = false, message = "Invalid or missing user authentication" },
+                    statusCode: 401);
+            }
+
+            var success = await authService.ChangePasswordAsync(
+                userId,
+                request.CurrentPassword,
+                request.NewPassword,
+                cancellationToken);
+
+            if (!success)
+            {
+                return Results.Json(
+                    new { success = false, message = "Current password is incorrect" },
+                    statusCode: 400);
+            }
+
+            return Results.Ok(new { success = true, message = "Password changed successfully" });
+        })
+        .RequireAuthorization()
+        .WithName("ChangePassword")
+        .WithSummary("Change user password")
+        .WithDescription("Allows authenticated users to change their password by providing their current password and new password.")
+        .Produces(200)
+        .Produces(400)
+        .Produces(401)
+        .WithOpenApi();
     }
 }
 

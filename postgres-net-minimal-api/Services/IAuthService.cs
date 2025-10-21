@@ -24,6 +24,16 @@ public interface IAuthService
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Authentication result with token and user data, null if authentication fails</returns>
     Task<AuthenticationResult?> AuthenticateWithUserDataAsync(string usernameOrEmail, string password, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Changes a user's password
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <param name="currentPassword">Current password for verification</param>
+    /// <param name="newPassword">New password</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if password changed successfully, false if current password is incorrect</returns>
+    Task<bool> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

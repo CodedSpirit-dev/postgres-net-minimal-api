@@ -79,6 +79,59 @@ public record UpdateUserRequest
 }
 
 /// <summary>
+/// Request DTO for updating own profile (User can edit their own data, except role)
+/// </summary>
+public record UpdateMyProfileRequest
+{
+    [Required]
+    [StringLength(20, MinimumLength = 3)]
+    public required string UserName { get; init; }
+
+    [Required]
+    [StringLength(100, MinimumLength = 1)]
+    public required string FirstName { get; init; }
+
+    [StringLength(100)]
+    public string? MiddleName { get; init; }
+
+    [Required]
+    [StringLength(100, MinimumLength = 1)]
+    public required string LastName { get; init; }
+
+    [StringLength(100)]
+    public string? MotherMaidenName { get; init; }
+
+    [Required]
+    public required DateOnly DateOfBirth { get; init; }
+
+    [Required]
+    [EmailAddress]
+    [StringLength(255)]
+    public required string Email { get; init; }
+
+    // RoleId is NOT included - users cannot change their own role
+}
+
+/// <summary>
+/// Request DTO for changing password
+/// </summary>
+public record ChangePasswordRequest
+{
+    [Required]
+    [StringLength(100, MinimumLength = 8)]
+    public required string CurrentPassword { get; init; }
+
+    [Required]
+    [StringLength(100, MinimumLength = 8)]
+    public required string NewPassword { get; init; }
+
+    [Required]
+    [StringLength(100, MinimumLength = 8)]
+    [Compare(nameof(NewPassword), ErrorMessage = "New password and confirmation do not match")]
+    public required string ConfirmNewPassword { get; init; }
+}
+
+/// <summary>
 /// Request DTO for creating a new role (Admin only)
 /// </summary>
 public record CreateRoleRequest

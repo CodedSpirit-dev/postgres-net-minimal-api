@@ -69,6 +69,43 @@ public static class UsersEndpoints
         .Produces(400)
         .WithOpenApi();
 
+        // PUT /users/me - Update own profile (authenticated users)
+        group.MapPut("/me", async (
+            UpdateMyProfileRequest request,
+            IUserService userService,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            // Extract user ID from JWT claims
+            var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Results.Json(
+                    new { error = "Invalid or missing user authentication" },
+                    statusCode: 401);
+            }
+
+            try
+            {
+                var user = await userService.UpdateMyProfileAsync(userId, request, cancellationToken);
+                return user is not null ? Results.Ok(user) : Results.NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
+        })
+        .RequireAuthorization()
+        .WithName("UpdateMyProfile")
+        .WithSummary("Update own profile")
+        .WithDescription("Allows authenticated users to update their own profile information (username, name, email, date of birth). Users cannot change their own role.")
+        .Produces<UserResponseDto>(200)
+        .Produces(400)
+        .Produces(401)
+        .Produces(404)
+        .WithOpenApi();
+
         // PUT /users/{id} - Update user (Admin only)
         group.MapPut("/{id:guid}", async (
             Guid id,

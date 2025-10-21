@@ -201,6 +201,54 @@ public class UserService(
         return user.ToDto();
     }
 
+    public async Task<UserResponseDto?> UpdateMyProfileAsync(
+        Guid userId,
+        UpdateMyProfileRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user is null)
+        {
+            return null;
+        }
+
+        // Validate email uniqueness (excluding current user)
+        var emailExists = await _context.Users
+            .AsNoTracking()
+            .AnyAsync(u => u.Email.ToLower() == request.Email.ToLower() && u.Id != userId, cancellationToken);
+
+        if (emailExists)
+        {
+            throw new InvalidOperationException("Email address is already registered");
+        }
+
+        // Validate username uniqueness (excluding current user)
+        var usernameExists = await _context.Users
+            .AsNoTracking()
+            .AnyAsync(u => u.UserName.ToLower() == request.UserName.ToLower() && u.Id != userId, cancellationToken);
+
+        if (usernameExists)
+        {
+            throw new InvalidOperationException("Username is already taken");
+        }
+
+        // Update user properties (NOT role - users cannot change their own role)
+        user.UserName = request.UserName;
+        user.FirstName = request.FirstName;
+        user.MiddleName = request.MiddleName;
+        user.LastName = request.LastName;
+        user.MotherMaidenName = request.MotherMaidenName;
+        user.DateOfBirth = request.DateOfBirth;
+        user.Email = request.Email;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return user.ToDto();
+    }
+
     public async Task<bool> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var user = await _context.Users.FindAsync([id], cancellationToken);
