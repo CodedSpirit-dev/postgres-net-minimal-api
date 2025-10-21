@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using postgres_net_minimal_api.Services;
+using postgres_net_minimal_api.DTOs;
 
 namespace postgres_net_minimal_api.Controllers;
 
@@ -10,6 +11,49 @@ public static class AuthEndpoints
         var group = app.MapGroup("/auth")
             .WithTags("Authentication")
             .WithOpenApi();
+
+        // POST /auth/register - Register new user with default "User" role
+        group.MapPost("/register", async (
+            CreateUserRequest request,
+            IUserService userService,
+            IAuthService authService,
+            CancellationToken cancellationToken) =>
+        {
+            try
+            {
+                // Create user with default "User" role
+                var user = await userService.CreateUserAsync(request, cancellationToken);
+
+                // Automatically authenticate and return JWT token
+                var token = await authService.AuthenticateAsync(
+                    request.Email,
+                    request.Password,
+                    cancellationToken);
+
+                return Results.Created($"/api/users/{user.Id}", new RegisterResponse(
+                    Success: true,
+                    Message: "User registered successfully",
+                    Token: token,
+                    User: user));
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Handle validation errors (duplicate email/username, weak password, etc.)
+                return Results.BadRequest(new RegisterResponse(
+                    Success: false,
+                    Message: ex.Message,
+                    Token: null,
+                    User: null));
+            }
+        })
+        .RequireRateLimiting("login") // Same rate limit as login to prevent abuse
+        .WithName("Register")
+        .WithSummary("User registration")
+        .WithDescription("Registers a new user with the default 'User' role. Returns a JWT token on success. Rate limited to 5 attempts per minute.")
+        .Produces<RegisterResponse>(201)
+        .Produces<RegisterResponse>(400)
+        .Produces(429)
+        .WithOpenApi();
 
         // POST /auth/login - Authenticate user and generate JWT token
         group.MapPost("/login", async (
@@ -69,3 +113,12 @@ public record LoginRequest
 /// Login response DTO
 /// </summary>
 public record LoginResponse(string Token);
+
+/// <summary>
+/// Registration response DTO
+/// </summary>
+public record RegisterResponse(
+    bool Success,
+    string Message,
+    string? Token,
+    UserResponseDto? User);
