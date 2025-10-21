@@ -1,7 +1,5 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using postgres_net_minimal_api.Data;
-using postgres_net_minimal_api.Models;
+using postgres_net_minimal_api.DTOs;
+using postgres_net_minimal_api.Services;
 
 namespace postgres_net_minimal_api.Controllers;
 
@@ -12,168 +10,106 @@ public static class UsersEndpoints
         var group = app.MapGroup("/users")
             .WithTags("Users")
             .WithOpenApi();
-        
-        group.MapGet("/", async (AppDbContext db) =>
-            await db.Users
-                .Include(u => u.Role)
-                .Select(u => new 
-                {
-                    u.Id,
-                    u.FirstName,
-                    u.LastName,
-                    u.MiddleName,
-                    u.Email,
-                    u.DateOfBirth,
-                    u.MotherMaidenName,
-                    Role = new 
-                    {
-                        u.Role.Id,
-                        u.Role.Name,
-                        u.Role.Description
-                    }
-                })
-                .ToListAsync())
-            .AllowAnonymous()  // ← AGREGADO: Permite acceso público
-            .WithName("GetAllUsers")
-            .WithSummary("Obtener todos los usuarios")
-            .WithDescription("Retorna una lista de todos los usuarios con su información de rol")
-            .Produces(200)
-            .WithOpenApi();
-        
-        // Obtain user by ID - Project to anonymous object
-        group.MapGet("/{id:guid}", async (Guid id, AppDbContext db) =>
+
+        // GET /users - Get all users with pagination
+        group.MapGet("/", async (
+            IUserService userService,
+            int page = 1,
+            int pageSize = 20,
+            CancellationToken cancellationToken = default) =>
         {
-            var user = await db.Users
-                .Include(u => u.Role)
-                .Where(u => u.Id == id)
-                .Select(u => new 
-                {
-                    u.Id,
-                    u.FirstName,
-                    u.LastName,
-                    u.MiddleName,
-                    u.Email,
-                    u.DateOfBirth,
-                    u.MotherMaidenName,
-                    Role = new 
-                    {
-                        u.Role.Id,
-                        u.Role.Name,
-                        u.Role.Description
-                    }
-                })
-                .FirstOrDefaultAsync();
-                
+            var result = await userService.GetAllUsersAsync(page, pageSize, cancellationToken);
+            return Results.Ok(result);
+        })
+        .AllowAnonymous()
+        .WithName("GetAllUsers")
+        .WithSummary("Get all users")
+        .WithDescription("Returns a paginated list of all users with their role information")
+        .Produces<PagedResult<UserResponseDto>>(200)
+        .WithOpenApi();
+        
+        // GET /users/{id} - Get user by ID
+        group.MapGet("/{id:guid}", async (
+            Guid id,
+            IUserService userService,
+            CancellationToken cancellationToken) =>
+        {
+            var user = await userService.GetUserByIdAsync(id, cancellationToken);
             return user is not null ? Results.Ok(user) : Results.NotFound();
         })
-        .AllowAnonymous()  // ← AGREGADO: Permite acceso público
+        .AllowAnonymous()
         .WithName("GetUserById")
-        .WithSummary("Obtener usuario por ID")
-        .WithDescription("Retorna un usuario específico por su ID único")
-        .Produces(200)
+        .WithSummary("Get user by ID")
+        .WithDescription("Returns a specific user by their unique identifier")
+        .Produces<UserResponseDto>(200)
         .Produces(404)
         .WithOpenApi();
 
-        // Create user - Público para registro
-        group.MapPost("/", async (User inputUser, AppDbContext db) =>
+        // POST /users - Create user (public registration)
+        group.MapPost("/", async (
+            CreateUserRequest request,
+            IUserService userService,
+            CancellationToken cancellationToken) =>
         {
-            // Validar que el rol sea válido (opcional: solo permitir User o Guest para auto-registro)
-            var role = await db.UserRoles.FindAsync(inputUser.RoleId);
-            if (role is null)
+            try
             {
-                return Results.BadRequest(new { error = "El rol especificado no existe" });
+                var user = await userService.CreateUserAsync(request, cancellationToken);
+                return Results.Created($"/users/{user.Id}", user);
             }
-
-            // Validar email único
-            var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == inputUser.Email);
-            if (existingUser is not null)
+            catch (InvalidOperationException ex)
             {
-                return Results.BadRequest(new { error = "El email ya está registrado" });
+                return Results.BadRequest(new { error = ex.Message });
             }
-
-            // Validar username único
-            var existingUsername = await db.Users.FirstOrDefaultAsync(u => u.UserName == inputUser.UserName);
-            if (existingUsername is not null)
-            {
-                return Results.BadRequest(new { error = "El nombre de usuario ya está en uso" });
-            }
-
-            // Hash de la contraseña antes de guardar
-            inputUser.HashedPassword = BCrypt.Net.BCrypt.HashPassword(inputUser.HashedPassword);
-            inputUser.Id = Guid.NewGuid();
-            
-            db.Users.Add(inputUser);
-            await db.SaveChangesAsync();
-            
-            return Results.Created($"/users/{inputUser.Id}", new 
-            {
-                inputUser.Id,
-                inputUser.FirstName,
-                inputUser.LastName,
-                inputUser.MiddleName,
-                inputUser.Email,
-                inputUser.DateOfBirth,
-                inputUser.RoleId
-            });
         })
-        .AllowAnonymous()  // ← CAMBIADO: Permite registro público
+        .AllowAnonymous()
         .WithName("CreateUser")
-        .WithSummary("Crear nuevo usuario")
-        .WithDescription("Crea un nuevo usuario en el sistema (Registro público).")
-        .Produces(201)
+        .WithSummary("Create new user")
+        .WithDescription("Creates a new user in the system (Public registration). User is assigned the default 'User' role automatically.")
+        .Produces<UserResponseDto>(201)
         .Produces(400)
         .WithOpenApi();
 
-        // Update user - Solo Admin
-        group.MapPut("/{id}", async (Guid id, User inputUser, AppDbContext db) =>
+        // PUT /users/{id} - Update user (Admin only)
+        group.MapPut("/{id:guid}", async (
+            Guid id,
+            UpdateUserRequest request,
+            IUserService userService,
+            CancellationToken cancellationToken) =>
         {
-            var user = await db.Users.FindAsync(id);
-            if (user is null) return Results.NotFound();
-
-            user.FirstName = inputUser.FirstName;
-            user.LastName = inputUser.LastName;
-            user.MiddleName = inputUser.MiddleName;
-            user.Email = inputUser.Email;
-            user.UserName = inputUser.UserName;
-            user.DateOfBirth = inputUser.DateOfBirth;
-            user.MotherMaidenName = inputUser.MotherMaidenName;
-            
-            // Solo actualizar contraseña si se proporciona
-            if (!string.IsNullOrEmpty(inputUser.HashedPassword))
+            try
             {
-                user.HashedPassword = BCrypt.Net.BCrypt.HashPassword(inputUser.HashedPassword);
+                var user = await userService.UpdateUserAsync(id, request, cancellationToken);
+                return user is not null ? Results.Ok(user) : Results.NotFound();
             }
-            
-            user.RoleId = inputUser.RoleId;
-
-            await db.SaveChangesAsync();
-            return Results.NoContent();
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
         })
         .RequireAuthorization(policy => policy.RequireRole("Admin"))
         .WithName("UpdateUser")
-        .WithSummary("Actualizar usuario")
-        .WithDescription("Actualiza la información de un usuario existente. Solo usuarios con rol Admin pueden realizar esta acción.")
-        .Produces(204)
+        .WithSummary("Update user")
+        .WithDescription("Updates an existing user's information. Only users with Admin role can perform this action.")
+        .Produces<UserResponseDto>(200)
         .Produces(400)
         .Produces(401)
         .Produces(403)
         .Produces(404)
         .WithOpenApi();
         
-        //Delete User - Solo Admin
-        group.MapDelete("/{id}", async (Guid id, AppDbContext db) =>
+        // DELETE /users/{id} - Delete user (Admin only)
+        group.MapDelete("/{id:guid}", async (
+            Guid id,
+            IUserService userService,
+            CancellationToken cancellationToken) =>
         {
-            var user = await db.Users.FindAsync(id);
-            if (user is null) return Results.NotFound();
-
-            db.Users.Remove(user);
-            await db.SaveChangesAsync();
-            return Results.NoContent();
+            var deleted = await userService.DeleteUserAsync(id, cancellationToken);
+            return deleted ? Results.NoContent() : Results.NotFound();
         })
         .RequireAuthorization(policy => policy.RequireRole("Admin"))
         .WithName("DeleteUser")
-        .WithSummary("Eliminar usuario")
-        .WithDescription("Elimina permanentemente un usuario del sistema. Solo usuarios con rol Admin pueden realizar esta acción.")
+        .WithSummary("Delete user")
+        .WithDescription("Permanently deletes a user from the system. Only users with Admin role can perform this action.")
         .Produces(204)
         .Produces(401)
         .Produces(403)
