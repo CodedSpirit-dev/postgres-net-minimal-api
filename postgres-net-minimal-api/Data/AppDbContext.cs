@@ -32,9 +32,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         var adminUserId = Guid.Parse("A1111111-1111-1111-1111-111111111111");
         var standardUserId = Guid.Parse("B2222222-2222-2222-2222-222222222222");
 
-        // Pre-generated BCrypt hashes for seed data
-        // Admin password: AdminPassword123!
-        // User password: UserPassword123!
+        // Pre-generated BCrypt hashes for seed data (static hashes to avoid runtime hashing)
         modelBuilder.Entity<User>().HasData(
             new User
             {
@@ -54,7 +52,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 FirstName = "John",
                 LastName = "Doe",
                 Email = "john.doe@example.com",
-                HashedPassword = "$2a$11$5ByfQRylb6t1ucfmqMASC.OGbS4Qp7sPq4Dpc1YC24oiG6usM26PK",
+                HashedPassword = "yo$2a$11$5ByfQRylb6t1ucfmqMASC.OGbS4Qp7sPq4Dpc1YC24oiG6usM26PK",
                 DateOfBirth = new DateOnly(1995, 5, 15),
                 RoleId = userRoleId
             }
