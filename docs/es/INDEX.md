@@ -4,14 +4,20 @@
 
 ---
 
+## 🌐 Idioma / Language
+
+**Español** | [English](../en/INDEX.md)
+
+---
+
 ## 📚 Tabla de Contenidos
 
 ### 🏗️ Arquitectura y Diseño
 
-- **[Blog System](./BLOG_SYSTEM.md)** - Descripción completa del sistema de blog con RBAC granular
-- **[Security](./SECURITY.md)** - Consideraciones de seguridad y mejores prácticas
-- **[Improvements](./IMPROVEMENTS.md)** - Mejoras sugeridas y roadmap del proyecto
-- **[Code Review Report](./CODE_REVIEW_REPORT.md)** - Reporte de revisión de código y análisis
+- **[Sistema de Blog](./BLOG_SYSTEM.md)** - Descripción completa del sistema de blog con RBAC granular
+- **[Seguridad](./SECURITY.md)** - Consideraciones de seguridad y mejores prácticas
+- **[Mejoras](./IMPROVEMENTS.md)** - Mejoras sugeridas y roadmap del proyecto
+- **[Reporte de Revisión de Código](./CODE_REVIEW_REPORT.md)** - Reporte de revisión de código y análisis
 
 ---
 
@@ -19,19 +25,19 @@
 
 #### Endpoints de Autenticación
 
-- **[Registration Endpoint](./REGISTRATION_ENDPOINT.md)** - `POST /auth/register`
+- **[Endpoint de Registro](./REGISTRATION_ENDPOINT.md)** - `POST /auth/register`
   - Registro público de usuarios
   - Asignación automática del rol "User"
   - Retorna JWT token + datos del usuario
   - Rate limited (5 requests/minuto)
 
-- **[Login Endpoint](./LOGIN_ENDPOINT.md)** - `POST /auth/login`
+- **[Endpoint de Login](./LOGIN_ENDPOINT.md)** - `POST /auth/login`
   - Autenticación de usuarios
   - Login con username o email
   - Retorna JWT token + datos completos del usuario
   - Rate limited (5 requests/minuto)
 
-- **[Change Password Endpoint](./CHANGE_PASSWORD_ENDPOINT.md)** - `POST /auth/change-password`
+- **[Endpoint de Cambio de Contraseña](./CHANGE_PASSWORD_ENDPOINT.md)** - `POST /auth/change-password`
   - Cambio de contraseña para usuarios autenticados
   - Requiere verificación de contraseña actual
   - Confirmación de nueva contraseña
@@ -41,7 +47,7 @@
 
 ### 👤 Gestión de Usuarios
 
-- **[Update Profile Endpoint](./UPDATE_PROFILE_ENDPOINT.md)** - `PUT /users/me`
+- **[Endpoint de Actualización de Perfil](./UPDATE_PROFILE_ENDPOINT.md)** - `PUT /users/me`
   - Actualización de perfil propio
   - Usuarios pueden editar: username, nombre, email, fecha de nacimiento
   - **Restricción de seguridad**: Los usuarios NO pueden cambiar su propio rol
@@ -51,7 +57,7 @@
 
 ### 🗄️ Datos de Desarrollo
 
-- **[Seed Data Credentials](./SEED_DATA_CREDENTIALS.md)** - Credenciales de usuarios pre-configurados
+- **[Credenciales de Datos de Prueba](./SEED_DATA_CREDENTIALS.md)** - Credenciales de usuarios pre-configurados
   - SuperAdmin, Admin, User, Guest
   - Patrón de contraseñas: `yo{role}123`
   - Ejemplos de uso con cURL y otras herramientas
@@ -63,7 +69,7 @@
 
 ### Para Desarrolladores
 
-1. **Configuración Inicial**: Lee [README.md](../README.md) en la raíz del proyecto
+1. **Configuración Inicial**: Lee [README-ES.md](../../README-ES.md) en la raíz del proyecto
 2. **Sistema de Blog**: Revisa [BLOG_SYSTEM.md](./BLOG_SYSTEM.md) para entender la arquitectura
 3. **Credenciales de Prueba**: Consulta [SEED_DATA_CREDENTIALS.md](./SEED_DATA_CREDENTIALS.md)
 
@@ -126,7 +132,7 @@ Consulta **[IMPROVEMENTS.md](./IMPROVEMENTS.md)** para:
 
 ## 📝 Reportes y Análisis
 
-- **[Code Review Report](./CODE_REVIEW_REPORT.md)** - Análisis de código y recomendaciones
+- **[Reporte de Revisión de Código](./CODE_REVIEW_REPORT.md)** - Análisis de código y recomendaciones
 
 ---
 
@@ -138,7 +144,7 @@ Consulta **[IMPROVEMENTS.md](./IMPROVEMENTS.md)** para:
 - **Minimal APIs** (ASP.NET Core)
 - **JWT Bearer Authentication**
 - **BCrypt** para hashing de contraseñas
-- **RBAC Granular** (Resource-Action permissions)
+- **RBAC Granular** (Permisos Resource-Action)
 
 ---
 
@@ -146,10 +152,16 @@ Consulta **[IMPROVEMENTS.md](./IMPROVEMENTS.md)** para:
 
 Si necesitas ayuda con algún aspecto específico:
 1. Revisa el documento correspondiente en este índice
-2. Consulta el README.md principal en la raíz del proyecto
+2. Consulta el README-ES.md principal en la raíz del proyecto
 3. Revisa los ejemplos de código en cada documento de endpoint
 
 ---
 
+## 🌐 Documentación en Otros Idiomas
+
+- **[English Documentation](../en/INDEX.md)** - Complete documentation in English
+
+---
+
 **Última actualización**: Octubre 2025
-**Proyecto**: PostgreSQL .NET 9 Minimal API - Blog System with Granular RBAC
+**Proyecto**: PostgreSQL .NET 9 Minimal API - Sistema de Blog con RBAC Granular
