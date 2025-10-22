@@ -5,6 +5,16 @@
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
+---
+
+## 🌐 Language / Idioma
+
+**English** | [Español](./README-ES.md)
+
+📖 **Documentation**: [English](./docs/en/INDEX.md) | [Español](./docs/es/INDEX.md)
+
+---
+
 A production-ready REST API built with .NET 9, PostgreSQL, and Entity Framework Core for user and role management. Features JWT authentication, Docker support, and comprehensive API documentation.
 
 ## 📑 Table of Contents
@@ -163,6 +173,18 @@ The migration automatically creates test users and roles:
 
 ## 📚 API Documentation
 
+### 📖 Complete Documentation
+
+For complete and detailed project documentation, see the **[Documentation Folder (docs/)](./docs/en/INDEX.md)**:
+
+- **[📚 Master Documentation Index](./docs/en/INDEX.md)** - Complete guide with links to all documentation
+- **[🔐 Authentication & Endpoints](./docs/en/INDEX.md#-authentication-and-authorization)** - Login, registration, password change
+- **[📝 Blog System](./docs/en/BLOG_SYSTEM.md)** - Granular RBAC architecture
+- **[👥 Development Credentials](./docs/en/SEED_DATA_CREDENTIALS.md)** - Test users and passwords
+- **[🔒 Security](./docs/en/SECURITY.md)** - Security best practices
+
+**Español**: Ver [Documentación en Español](./docs/es/INDEX.md)
+
 ### Swagger UI
 Access interactive API documentation at: **http://localhost:5174**
 
@@ -174,18 +196,34 @@ The Swagger UI allows you to:
 
 ### API Endpoints Overview
 
+#### Authentication Endpoints
+
+| Method | Endpoint | Description | Auth Required | Documentation |
+|--------|----------|-------------|---------------|---------------|
+| POST | `/auth/register` | Register new user (auto role "User") | No | [📄 Docs](./docs/en/REGISTRATION_ENDPOINT.md) |
+| POST | `/auth/login` | Authenticate user and get JWT token | No | [📄 Docs](./docs/en/LOGIN_ENDPOINT.md) |
+| POST | `/auth/change-password` | Change user password | Yes | [📄 Docs](./docs/en/CHANGE_PASSWORD_ENDPOINT.md) |
+| POST | `/auth/logout` | Logout (client-side token discard) | Yes | - |
+
+#### User Management Endpoints
+
+| Method | Endpoint | Description | Auth Required | Documentation |
+|--------|----------|-------------|---------------|---------------|
+| GET | `/users` | Get all users with pagination | No | - |
+| GET | `/users/{id}` | Get user by ID | No | - |
+| POST | `/users` | Create new user (public registration) | No | - |
+| PUT | `/users/me` | Update own profile | Yes | [📄 Docs](./docs/en/UPDATE_PROFILE_ENDPOINT.md) |
+| PUT | `/users/{id}` | Update user (Admin only) | Yes (Admin) | - |
+| DELETE | `/users/{id}` | Delete user (Admin only) | Yes (Admin) | - |
+
+#### Role Management Endpoints
+
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| POST | `/auth/login` | Authenticate user and get JWT token | No |
-| GET | `/users` | Get all users with roles | No* |
-| GET | `/users/{id}` | Get user by ID | No* |
-| POST | `/users` | Create new user | No* |
-| PUT | `/users/{id}` | Update user | No* |
-| DELETE | `/users/{id}` | Delete user | No* |
-| GET | `/roles` | Get all roles | No* |
-| GET | `/roles/{id}` | Get role by ID | No* |
+| GET | `/roles` | Get all roles | No |
+| GET | `/roles/{id}` | Get role by ID | No |
 
-*_Authentication middleware not yet implemented (see TODO)_
+**Test credentials**: See [SEED_DATA_CREDENTIALS.md](./docs/en/SEED_DATA_CREDENTIALS.md)
 
 ### Authentication Endpoints
 

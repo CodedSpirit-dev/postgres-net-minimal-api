@@ -382,4 +382,17 @@ dotnet ef database update
 
 ---
 
+## Related Documentation
+
+- **[Seed Data Credentials](./SEED_DATA_CREDENTIALS.md)** - Test users and their permissions
+- **[Security](./SECURITY.md)** - Security best practices
+- **[Improvements](./IMPROVEMENTS.md)** - Suggested improvements and roadmap
+- **[📖 Documentation Index](./INDEX.md)** - Return to main documentation index
+
+---
+
 **The blog system is production-ready and follows all .NET 9 best practices with PostgreSQL optimizations!** 🎉
+
+---
+
+**[⬅️ Back to Documentation Index](./INDEX.md)**

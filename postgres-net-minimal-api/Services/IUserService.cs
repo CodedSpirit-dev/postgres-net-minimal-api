@@ -23,7 +23,12 @@ public interface IUserService
     Task<UserResponseDto> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates an existing user (Admin only)
+    /// Updates own profile (User can edit their own data, except role)
+    /// </summary>
+    Task<UserResponseDto?> UpdateMyProfileAsync(Guid userId, UpdateMyProfileRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates an existing user (Admin only - can change role)
     /// </summary>
     Task<UserResponseDto?> UpdateUserAsync(Guid id, UpdateUserRequest request, CancellationToken cancellationToken = default);
 

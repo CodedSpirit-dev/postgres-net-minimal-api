@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using postgres_net_minimal_api.Services;
+using postgres_net_minimal_api.DTOs;
 
 namespace postgres_net_minimal_api.Controllers;
 
@@ -11,28 +12,77 @@ public static class AuthEndpoints
             .WithTags("Authentication")
             .WithOpenApi();
 
+        // POST /auth/register - Register new user with default "User" role
+        group.MapPost("/register", async (
+            CreateUserRequest request,
+            IUserService userService,
+            IAuthService authService,
+            CancellationToken cancellationToken) =>
+        {
+            try
+            {
+                // Create user with default "User" role
+                var user = await userService.CreateUserAsync(request, cancellationToken);
+
+                // Automatically authenticate and return JWT token
+                var token = await authService.AuthenticateAsync(
+                    request.Email,
+                    request.Password,
+                    cancellationToken);
+
+                return Results.Created($"/api/users/{user.Id}", new RegisterResponse(
+                    Success: true,
+                    Message: "User registered successfully",
+                    Token: token,
+                    User: user));
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Handle validation errors (duplicate email/username, weak password, etc.)
+                return Results.BadRequest(new RegisterResponse(
+                    Success: false,
+                    Message: ex.Message,
+                    Token: null,
+                    User: null));
+            }
+        })
+        .RequireRateLimiting("login") // Same rate limit as login to prevent abuse
+        .WithName("Register")
+        .WithSummary("User registration")
+        .WithDescription("Registers a new user with the default 'User' role. Returns a JWT token on success. Rate limited to 5 attempts per minute.")
+        .Produces<RegisterResponse>(201)
+        .Produces<RegisterResponse>(400)
+        .Produces(429)
+        .WithOpenApi();
+
         // POST /auth/login - Authenticate user and generate JWT token
         group.MapPost("/login", async (
             LoginRequest request,
             IAuthService authService,
             CancellationToken cancellationToken) =>
         {
-            var token = await authService.AuthenticateAsync(
+            var result = await authService.AuthenticateWithUserDataAsync(
                 request.UsernameOrEmail,
                 request.Password,
                 cancellationToken);
 
-            if (token is null)
+            if (result is null)
             {
-                return Results.Unauthorized();
+                return Results.Json(
+                    new { success = false, message = "Invalid username/email or password" },
+                    statusCode: 401);
             }
 
-            return Results.Ok(new LoginResponse(token));
+            return Results.Ok(new LoginResponse(
+                Success: true,
+                Message: "Login successful",
+                Token: result.Token,
+                User: result.User));
         })
         .RequireRateLimiting("login") // Rate limit to prevent brute force attacks
         .WithName("Login")
         .WithSummary("User login")
-        .WithDescription("Authenticates a user with email/username and password. Returns a JWT token on success. Rate limited to 5 attempts per minute.")
+        .WithDescription("Authenticates a user with email/username and password. Returns a JWT token and user data on success. Rate limited to 5 attempts per minute.")
         .Produces<LoginResponse>(200)
         .Produces(401)
         .Produces(429)
@@ -46,6 +96,47 @@ public static class AuthEndpoints
         .WithSummary("User logout")
         .WithDescription("Logout endpoint. In a stateless JWT system, the client should discard the token. In production, implement token blacklisting.")
         .Produces(200)
+        .Produces(401)
+        .WithOpenApi();
+
+        // POST /auth/change-password - Change user password
+        group.MapPost("/change-password", async (
+            ChangePasswordRequest request,
+            IAuthService authService,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            // Extract user ID from JWT claims
+            var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Results.Json(
+                    new { success = false, message = "Invalid or missing user authentication" },
+                    statusCode: 401);
+            }
+
+            var success = await authService.ChangePasswordAsync(
+                userId,
+                request.CurrentPassword,
+                request.NewPassword,
+                cancellationToken);
+
+            if (!success)
+            {
+                return Results.Json(
+                    new { success = false, message = "Current password is incorrect" },
+                    statusCode: 400);
+            }
+
+            return Results.Ok(new { success = true, message = "Password changed successfully" });
+        })
+        .RequireAuthorization()
+        .WithName("ChangePassword")
+        .WithSummary("Change user password")
+        .WithDescription("Allows authenticated users to change their password by providing their current password and new password.")
+        .Produces(200)
+        .Produces(400)
         .Produces(401)
         .WithOpenApi();
     }
@@ -68,4 +159,17 @@ public record LoginRequest
 /// <summary>
 /// Login response DTO
 /// </summary>
-public record LoginResponse(string Token);
+public record LoginResponse(
+    bool Success,
+    string Message,
+    string Token,
+    UserResponseDto User);
+
+/// <summary>
+/// Registration response DTO
+/// </summary>
+public record RegisterResponse(
+    bool Success,
+    string Message,
+    string? Token,
+    UserResponseDto? User);
