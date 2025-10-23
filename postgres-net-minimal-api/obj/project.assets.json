@@ -9607,19 +9607,19 @@
     ]
   },
   "packageFolders": {
-    "/home/victor/.nuget/packages/": {}
+    "/root/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/postgres-net-minimal-api.csproj",
+      "projectUniqueName": "/home/victor_v/projects/postgres-net-minimal-api/postgres-net-minimal-api/postgres-net-minimal-api.csproj",
       "projectName": "postgres-net-minimal-api",
-      "projectPath": "/mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/postgres-net-minimal-api.csproj",
-      "packagesPath": "/home/victor/.nuget/packages/",
-      "outputPath": "/mnt/d/projects/postgres-net-minimal-api/postgres-net-minimal-api/obj/",
+      "projectPath": "/home/victor_v/projects/postgres-net-minimal-api/postgres-net-minimal-api/postgres-net-minimal-api.csproj",
+      "packagesPath": "/root/.nuget/packages/",
+      "outputPath": "/home/victor_v/projects/postgres-net-minimal-api/postgres-net-minimal-api/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/victor/.nuget/NuGet/NuGet.Config"
+        "/root/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"

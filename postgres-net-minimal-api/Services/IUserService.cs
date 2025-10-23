@@ -37,18 +37,3 @@ public interface IUserService
     /// </summary>
     Task<bool> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default);
 }
-
-/// <summary>
-/// Represents a paginated result set
-/// </summary>
-public record PagedResult<T>(
-    IEnumerable<T> Items,
-    int TotalCount,
-    int Page,
-    int PageSize,
-    int TotalPages
-)
-{
-    public bool HasPreviousPage => Page > 1;
-    public bool HasNextPage => Page < TotalPages;
-}

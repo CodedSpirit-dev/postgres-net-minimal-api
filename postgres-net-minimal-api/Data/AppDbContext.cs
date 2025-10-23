@@ -34,7 +34,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         base.OnModelCreating(modelBuilder);
 
         // Fixed GUIDs for roles
-        var superAdminRoleId = Guid.Parse("00000000-0000-0000-0000-000000000000");
+        var superAdminRoleId = Guid.Parse("10000000-0000-0000-0000-000000000000");
         var adminRoleId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var userRoleId = Guid.Parse("22222222-2222-2222-2222-222222222222");
         var guestRoleId = Guid.Parse("33333333-3333-3333-3333-333333333333");
@@ -48,7 +48,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         );
 
         // Fixed GUIDs for users
-        var superAdminUserId = Guid.Parse("S0000000-0000-0000-0000-000000000000");
+        var superAdminUserId = Guid.Parse("50000000-0000-0000-0000-000000000000");
         var adminUserId = Guid.Parse("A1111111-1111-1111-1111-111111111111");
         var standardUserId = Guid.Parse("B2222222-2222-2222-2222-222222222222");
         var guestUserId = Guid.Parse("C3333333-3333-3333-3333-333333333333");
@@ -198,10 +198,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     private static void SeedBlogData(ModelBuilder modelBuilder)
     {
-        var now = DateTime.UtcNow;
+        var now = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         // IDs for users
-        var superAdminUserId = Guid.Parse("S0000000-0000-0000-0000-000000000000");
+        var superAdminUserId = Guid.Parse("50000000-0000-0000-0000-000000000000");
         var adminUserId = Guid.Parse("A1111111-1111-1111-1111-111111111111");
         var standardUserId = Guid.Parse("B2222222-2222-2222-2222-222222222222");
         var guestUserId = Guid.Parse("C3333333-3333-3333-3333-333333333333");
@@ -232,9 +232,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         );
 
         // Seed Tags
-        var csharpTagId = Guid.Parse("T1111111-1111-1111-1111-111111111111");
-        var dotnetTagId = Guid.Parse("T2222222-2222-2222-2222-222222222222");
-        var postgresTagId = Guid.Parse("T3333333-3333-3333-3333-333333333333");
+        var csharpTagId = Guid.Parse("71111111-1111-1111-1111-111111111111");
+        var dotnetTagId = Guid.Parse("72222222-2222-2222-2222-222222222222");
+        var postgresTagId = Guid.Parse("73333333-3333-3333-3333-333333333333");
 
         modelBuilder.Entity<Tag>().HasData(
             new Tag { Id = csharpTagId, Name = "C#", Slug = "csharp", CreatedAt = now },
@@ -243,10 +243,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         );
 
         // Seed Profiles
-        var superAdminProfileId = Guid.Parse("P0000000-0000-0000-0000-000000000000");
-        var adminProfileId = Guid.Parse("P1111111-1111-1111-1111-111111111111");
-        var userProfileId = Guid.Parse("P2222222-2222-2222-2222-222222222222");
-        var guestProfileId = Guid.Parse("P3333333-3333-3333-3333-333333333333");
+        var superAdminProfileId = Guid.Parse("90000000-0000-0000-0000-000000000000");
+        var adminProfileId = Guid.Parse("91111111-1111-1111-1111-111111111111");
+        var userProfileId = Guid.Parse("92222222-2222-2222-2222-222222222222");
+        var guestProfileId = Guid.Parse("93333333-3333-3333-3333-333333333333");
 
         modelBuilder.Entity<Profile>().HasData(
             new Profile
@@ -254,9 +254,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 Id = superAdminProfileId,
                 UserId = superAdminUserId,
                 Bio = "Super Administrator with unrestricted access to all system features. Responsible for platform management, user moderation, and system-wide configurations.",
-                Website = "https://platform.example.com",
+                WebsiteUrl = "https://platform.example.com",
                 TwitterHandle = "@platform_admin",
-                GitHubUsername = "superadmin",
+                GitHubHandle = "superadmin",
                 CreatedAt = now,
                 UpdatedAt = now
             },
@@ -265,9 +265,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 Id = adminProfileId,
                 UserId = adminUserId,
                 Bio = "System administrator and technical writer. Passionate about .NET technologies and modern software architecture.",
-                Website = "https://example.com/admin",
+                WebsiteUrl = "https://example.com/admin",
                 TwitterHandle = "@admin_dev",
-                GitHubUsername = "admin-developer",
+                GitHubHandle = "admin-developer",
                 CreatedAt = now,
                 UpdatedAt = now
             },
@@ -276,10 +276,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 Id = userProfileId,
                 UserId = standardUserId,
                 Bio = "Software developer specializing in C# and PostgreSQL. Love building scalable web applications.",
-                Website = "https://johndoe.dev",
+                WebsiteUrl = "https://johndoe.dev",
                 TwitterHandle = "@johndoe_dev",
-                GitHubUsername = "johndoe",
-                LinkedInUrl = "https://linkedin.com/in/johndoe",
+                GitHubHandle = "johndoe",
+                LinkedInHandle = "https://linkedin.com/in/johndoe",
                 CreatedAt = now,
                 UpdatedAt = now
             },
@@ -288,19 +288,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 Id = guestProfileId,
                 UserId = guestUserId,
                 Bio = "Guest user exploring the platform features.",
-                Website = null,
+                WebsiteUrl = null,
                 TwitterHandle = null,
-                GitHubUsername = null,
+                GitHubHandle = null,
                 CreatedAt = now,
                 UpdatedAt = now
             }
         );
 
         // Seed Posts
-        var post1Id = Guid.Parse("POST1111-1111-1111-1111-111111111111");
-        var post2Id = Guid.Parse("POST2222-2222-2222-2222-222222222222");
-        var post3Id = Guid.Parse("POST3333-3333-3333-3333-333333333333");
-        var post4Id = Guid.Parse("POST4444-4444-4444-4444-444444444444");
+        var post1Id = Guid.Parse("10571111-1111-1111-1111-111111111111");
+        var post2Id = Guid.Parse("10572222-2222-2222-2222-222222222222");
+        var post3Id = Guid.Parse("10573333-3333-3333-3333-333333333333");
+        var post4Id = Guid.Parse("10574444-4444-4444-4444-444444444444");
 
         modelBuilder.Entity<Post>().HasData(
             new Post
@@ -389,11 +389,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         );
 
         // Seed Comments
-        var comment1Id = Guid.Parse("COMM1111-1111-1111-1111-111111111111");
-        var comment2Id = Guid.Parse("COMM2222-2222-2222-2222-222222222222");
-        var comment3Id = Guid.Parse("COMM3333-3333-3333-3333-333333333333");
-        var comment4Id = Guid.Parse("COMM4444-4444-4444-4444-444444444444");
-        var comment5Id = Guid.Parse("COMM5555-5555-5555-5555-555555555555");
+        var comment1Id = Guid.Parse("C0001111-1111-1111-1111-111111111111");
+        var comment2Id = Guid.Parse("C0002222-2222-2222-2222-222222222222");
+        var comment3Id = Guid.Parse("C0003333-3333-3333-3333-333333333333");
+        var comment4Id = Guid.Parse("C0004444-4444-4444-4444-444444444444");
+        var comment5Id = Guid.Parse("C0005555-5555-5555-5555-555555555555");
 
         modelBuilder.Entity<Comment>().HasData(
             // Comments on Post 1 (Getting Started with .NET 9 and PostgreSQL)
@@ -538,7 +538,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     private static void SeedPermissionData(ModelBuilder modelBuilder)
     {
-        var now = DateTime.UtcNow;
+        var now = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         // 1. Seed ApplicationModules
         var userManagementModuleId = 1;
@@ -719,7 +719,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         AddFeatureAction(statisticsFeatureId, viewActionId);
 
         // 6. Seed RolePermissions (Assign permissions to roles)
-        var superAdminRoleId = Guid.Parse("00000000-0000-0000-0000-000000000000");
+        var superAdminRoleId = Guid.Parse("10000000-0000-0000-0000-000000000000");
         var adminRoleId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var userRoleId = Guid.Parse("22222222-2222-2222-2222-222222222222");
         var guestRoleId = Guid.Parse("33333333-3333-3333-3333-333333333333");

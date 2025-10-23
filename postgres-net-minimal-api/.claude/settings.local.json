@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet run)",
+      "Read(//home/victor_v/projects/postgres-net-minimal-api/**)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet ef database:*)",
+      "Bash(dotnet tool install:*)",
+      "Bash(export PATH=\"$PATH:$HOME/.dotnet/tools\")",
+      "Bash(dotnet ef migrations:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

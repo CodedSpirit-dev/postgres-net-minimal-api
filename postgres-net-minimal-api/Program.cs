@@ -9,8 +9,9 @@ using postgres_net_minimal_api.Services;
 using postgres_net_minimal_api.Authorization;
 using postgres_net_minimal_api.Authorization.Endpoints;
 using postgres_net_minimal_api.Authorization.Services;
+using postgres_net_minimal_api.Blog.Controllers;
 using Microsoft.AspNetCore.Authorization;
-using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using DotNetEnv;
 
 // Load environment variables from .env file if it exists
@@ -62,7 +63,7 @@ builder.Services.AddMemoryCache();
 // Register permission services
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IPermissionChecker, PermissionChecker>();
-builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 // Register ownership checkers for instance-level permissions
 builder.Services.AddScoped<PostOwnershipChecker>();
