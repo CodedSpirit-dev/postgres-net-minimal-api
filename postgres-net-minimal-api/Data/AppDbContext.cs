@@ -67,7 +67,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 FirstName = "Super",
                 LastName = "Administrator",
                 Email = "superadmin@admin.com",
-                HashedPassword = "$2a$11$xKJAr8qR9Z5VyN3J9YZ.qOh4L0U8XZ0F8Y0W2N6Q5M3F6Y7Z8Q9Ke", // yosuperadmin123
+                HashedPassword = "$2a$12$AIyvBPaFAwg.HVFlbCXTMugw8A4hU6LKlJCCbqxMiFvobB3eu0JYW", // yosuperadmin123
                 DateOfBirth = new DateOnly(1985, 1, 1),
                 RoleId = superAdminRoleId
             },

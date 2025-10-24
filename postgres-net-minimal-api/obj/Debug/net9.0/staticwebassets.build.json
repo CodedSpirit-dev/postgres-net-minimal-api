@@ -1,1 +1,12 @@
-{"Version":1,"Hash":"5ABhGjh0uzStBn46Ry2/qwMdGsLAmz5Z/hJP7E/wOSE=","Source":"postgres-net-minimal-api","BasePath":"_content/postgres-net-minimal-api","Mode":"Default","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}
+{
+  "Version": 1,
+  "Hash": "5ABhGjh0uzStBn46Ry2/qwMdGsLAmz5Z/hJP7E/wOSE=",
+  "Source": "postgres-net-minimal-api",
+  "BasePath": "_content/postgres-net-minimal-api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
