@@ -3,13 +3,16 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using postgres_net_minimal_api.Controllers;
+using postgres_net_minimal_api.Auth.Controllers;
+using postgres_net_minimal_api.Users.Controllers;
+using postgres_net_minimal_api.Roles.Controllers;
 using postgres_net_minimal_api.Data;
 using postgres_net_minimal_api.Services;
 using postgres_net_minimal_api.Authorization;
 using postgres_net_minimal_api.Authorization.Endpoints;
 using postgres_net_minimal_api.Authorization.Services;
 using postgres_net_minimal_api.Blog.Controllers;
+using postgres_net_minimal_api.Blog.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using DotNetEnv;
@@ -53,6 +56,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<IPasswordValidator, PasswordValidator>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
 
 // Register blog services
 builder.Services.AddScoped<postgres_net_minimal_api.Blog.Services.IPostService, postgres_net_minimal_api.Blog.Services.PostService>();

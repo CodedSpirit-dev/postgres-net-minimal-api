@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using postgres_net_minimal_api.Models;
+using postgres_net_minimal_api.Roles.Models;
 
 namespace postgres_net_minimal_api.Authorization.Models;
 

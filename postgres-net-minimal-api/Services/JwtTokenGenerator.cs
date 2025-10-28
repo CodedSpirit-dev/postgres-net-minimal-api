@@ -16,7 +16,9 @@ public class JwtSettings
     public required string Key { get; init; }
     public required string Issuer { get; init; }
     public required string Audience { get; init; }
-    public int ExpirationHours { get; init; } = 1;
+    public int ExpirationMinutes { get; init; } = 15;
+    public int ShortSessionHours { get; init; } = 8;
+    public int RememberMeDays { get; init; } = 15;
 }
 
 /// <summary>
@@ -43,10 +45,27 @@ public class JwtTokenGenerator(IOptions<JwtSettings> jwtSettings) : IJwtTokenGen
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(_jwtSettings.ExpirationHours),
+            expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
             signingCredentials: credentials
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public DateTime GetTokenExpiration()
+    {
+        return DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
+    }
+
+    public DateTime GetRefreshTokenExpiration()
+    {
+        return DateTime.UtcNow.AddHours(_jwtSettings.ShortSessionHours);
+    }
+
+    public DateTime GetRefreshTokenExpiration(bool rememberMe)
+    {
+        return rememberMe
+            ? DateTime.UtcNow.AddDays(_jwtSettings.RememberMeDays)
+            : DateTime.UtcNow.AddHours(_jwtSettings.ShortSessionHours);
     }
 }

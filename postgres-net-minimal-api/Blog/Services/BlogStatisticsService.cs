@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using postgres_net_minimal_api.Data;
-using postgres_net_minimal_api.DTOs;
+using postgres_net_minimal_api.Blog.DTOs;
 
 namespace postgres_net_minimal_api.Blog.Services;
 

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using postgres_net_minimal_api.Data;
-using postgres_net_minimal_api.DTOs;
+using postgres_net_minimal_api.Blog.DTOs;
 using postgres_net_minimal_api.Helpers;
-using postgres_net_minimal_api.Models;
+using postgres_net_minimal_api.Blog.Models;
 
 namespace postgres_net_minimal_api.Blog.Services;
 
@@ -26,6 +26,7 @@ public class CategoryService(AppDbContext context) : ICategoryService
     {
         return await _context.Categories
             .AsNoTracking()
+            .OrderBy(c => c.Name)
             .Select(c => new CategoryResponseDto(
                 c.Id,
                 c.Name,
@@ -35,7 +36,6 @@ public class CategoryService(AppDbContext context) : ICategoryService
                 c.CreatedAt,
                 c.UpdatedAt
             ))
-            .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
     }
 
@@ -176,6 +176,7 @@ public class TagService(AppDbContext context) : ITagService
     {
         return await _context.Tags
             .AsNoTracking()
+            .OrderBy(t => t.Name)
             .Select(t => new TagResponseDto(
                 t.Id,
                 t.Name,
@@ -183,7 +184,6 @@ public class TagService(AppDbContext context) : ITagService
                 t.PostTags.Count(pt => pt.Post.IsPublished),
                 t.CreatedAt
             ))
-            .OrderBy(t => t.Name)
             .ToListAsync(cancellationToken);
     }
 

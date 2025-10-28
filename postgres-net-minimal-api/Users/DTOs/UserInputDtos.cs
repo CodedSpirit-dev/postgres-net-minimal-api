@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace postgres_net_minimal_api.DTOs;
+namespace postgres_net_minimal_api.Users.DTOs;
 
 /// <summary>
 /// Request DTO for creating a new user (public registration)

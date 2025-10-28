@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace postgres_net_minimal_api.Models;
+namespace postgres_net_minimal_api.Blog.Models;
 
 /// <summary>
 /// Blog post category

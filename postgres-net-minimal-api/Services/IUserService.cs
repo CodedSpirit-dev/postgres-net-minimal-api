@@ -1,4 +1,5 @@
-using postgres_net_minimal_api.DTOs;
+using postgres_net_minimal_api.Users.DTOs;
+using postgres_net_minimal_api.Helpers;
 
 namespace postgres_net_minimal_api.Services;
 

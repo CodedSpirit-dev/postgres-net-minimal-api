@@ -1,5 +1,5 @@
-using postgres_net_minimal_api.DTOs;
-using postgres_net_minimal_api.Services;
+using postgres_net_minimal_api.Blog.DTOs;
+using postgres_net_minimal_api.Helpers;
 
 namespace postgres_net_minimal_api.Blog.Services;
 

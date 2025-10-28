@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using postgres_net_minimal_api.Data;
-using postgres_net_minimal_api.DTOs;
+using postgres_net_minimal_api.Users.DTOs;
 
 namespace postgres_net_minimal_api.Services;
 
@@ -10,11 +10,13 @@ namespace postgres_net_minimal_api.Services;
 public class AuthService(
     AppDbContext context,
     IPasswordHasher passwordHasher,
-    IJwtTokenGenerator tokenGenerator) : IAuthService
+    IJwtTokenGenerator tokenGenerator,
+    IRefreshTokenGenerator refreshTokenGenerator) : IAuthService
 {
     private readonly AppDbContext _context = context;
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
     private readonly IJwtTokenGenerator _tokenGenerator = tokenGenerator;
+    private readonly IRefreshTokenGenerator _refreshTokenGenerator = refreshTokenGenerator;
 
     public async Task<string?> AuthenticateAsync(
         string usernameOrEmail,
@@ -61,6 +63,7 @@ public class AuthService(
     public async Task<AuthenticationResult?> AuthenticateWithUserDataAsync(
         string usernameOrEmail,
         string password,
+        bool rememberMe = false,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(usernameOrEmail) || string.IsNullOrWhiteSpace(password))
@@ -72,7 +75,7 @@ public class AuthService(
 
         // Find user by email or username
         var user = await _context.Users
-            .AsNoTracking()
+            .AsTracking()
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u =>
                 u.Email.ToLower() == normalizedIdentifier ||
@@ -97,8 +100,21 @@ public class AuthService(
             user.UserName,
             user.Role.Name);
 
+        // Generate refresh token
+        var refreshToken = _refreshTokenGenerator.GenerateRefreshToken();
+        var hashedRefreshToken = _refreshTokenGenerator.HashRefreshToken(refreshToken);
+
+        // Save refresh token to database
+        user.RefreshToken = hashedRefreshToken;
+        user.RefreshTokenExpiryTime = _tokenGenerator.GetRefreshTokenExpiration(rememberMe);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Get expiration info
+        var expiresAt = _tokenGenerator.GetTokenExpiration();
+        var expiresIn = (int)(expiresAt - DateTime.UtcNow).TotalSeconds;
+
         // Return token and user data
-        return new AuthenticationResult(token, user.ToDto());
+        return new AuthenticationResult(token, refreshToken, expiresAt, expiresIn, user.ToDto());
     }
 
     public async Task<bool> ChangePasswordAsync(
@@ -114,6 +130,7 @@ public class AuthService(
 
         // Find user
         var user = await _context.Users
+            .AsTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
         if (user is null)
@@ -133,5 +150,56 @@ public class AuthService(
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;
+    }
+
+    public async Task<RefreshTokenResponse?> RefreshTokenAsync(
+        string refreshToken,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return null;
+        }
+
+        var hashedRefreshToken = _refreshTokenGenerator.HashRefreshToken(refreshToken);
+
+        var user = await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.RefreshToken == hashedRefreshToken, cancellationToken);
+
+        if (user is null)
+        {
+            return null;
+        }
+
+        if (user.RefreshTokenExpiryTime is null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        {
+            return null;
+        }
+
+        var newToken = _tokenGenerator.GenerateToken(
+            user.Id,
+            user.Email,
+            user.UserName,
+            user.Role.Name);
+
+        var expiresAt = _tokenGenerator.GetTokenExpiration();
+        var expiresIn = (int)(expiresAt - DateTime.UtcNow).TotalSeconds;
+
+        return new RefreshTokenResponse(newToken, expiresAt, expiresIn);
+    }
+
+    public async Task RevokeRefreshTokenAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users
+            .AsTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user is not null)
+        {
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = null;
+            await _context.SaveChangesAsync(cancellationToken);
+        }
     }
 }

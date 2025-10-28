@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
-using postgres_net_minimal_api.Models;
-using postgres_net_minimal_api.Services;
+using postgres_net_minimal_api.Blog.Models;
+using postgres_net_minimal_api.Users.Models;
+using postgres_net_minimal_api.Blog.Services;
 
-namespace postgres_net_minimal_api.DTOs;
+namespace postgres_net_minimal_api.Blog.DTOs;
 
 // ==================== PROFILE DTOs ====================
 

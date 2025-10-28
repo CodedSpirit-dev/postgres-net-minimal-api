@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using postgres_net_minimal_api.Blog.Services;
-using postgres_net_minimal_api.DTOs;
+using postgres_net_minimal_api.Blog.DTOs;
 using postgres_net_minimal_api.Authorization.Services;
 using postgres_net_minimal_api.Authorization.Enums;
 

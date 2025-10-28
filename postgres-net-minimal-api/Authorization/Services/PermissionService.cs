@@ -118,6 +118,7 @@ public class PermissionService(AppDbContext context, IMemoryCache cache) : IPerm
     public async Task<bool> RemovePermissionFromRoleAsync(Guid roleId, int featureActionId, CancellationToken cancellationToken = default)
     {
         var rolePermission = await context.RolePermissions
+            .AsTracking()
             .FirstOrDefaultAsync(rp => rp.RoleId == roleId && rp.FeatureActionId == featureActionId, cancellationToken);
 
         if (rolePermission == null)

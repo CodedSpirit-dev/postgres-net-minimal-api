@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Bash(dotnet ef migrations:*)",
+      "Bash(dotnet tool list:*)",
+      "Bash(export PATH=\"$PATH:$HOME/.dotnet/tools\":*)",
+      "Bash(dotnet ef database update:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

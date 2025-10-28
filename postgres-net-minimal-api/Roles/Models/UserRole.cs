@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using postgres_net_minimal_api.Authorization.Models;
 
-namespace postgres_net_minimal_api.Models;
+namespace postgres_net_minimal_api.Roles.Models;
 
 public class UserRole
 {

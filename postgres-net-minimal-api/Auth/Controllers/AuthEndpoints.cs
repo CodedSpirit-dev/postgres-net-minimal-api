@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using postgres_net_minimal_api.Services;
-using postgres_net_minimal_api.DTOs;
+using postgres_net_minimal_api.Users.DTOs;
 
-namespace postgres_net_minimal_api.Controllers;
+namespace postgres_net_minimal_api.Auth.Controllers;
 
 public static class AuthEndpoints
 {
@@ -64,6 +64,7 @@ public static class AuthEndpoints
             var result = await authService.AuthenticateWithUserDataAsync(
                 request.UsernameOrEmail,
                 request.Password,
+                request.RememberMe,
                 cancellationToken);
 
             if (result is null)
@@ -77,6 +78,9 @@ public static class AuthEndpoints
                 Success: true,
                 Message: "Login successful",
                 Token: result.Token,
+                RefreshToken: result.RefreshToken,
+                ExpiresAt: result.ExpiresAt,
+                ExpiresIn: result.ExpiresIn,
                 User: result.User));
         })
         .RequireRateLimiting("login") // Rate limit to prevent brute force attacks
@@ -88,13 +92,59 @@ public static class AuthEndpoints
         .Produces(429)
         .WithOpenApi();
 
-        // POST /auth/logout - Logout endpoint (placeholder for token blacklisting in production)
-        group.MapPost("/logout", () =>
-            Results.Ok(new { Message = "Logout successful. Please discard your token client-side." }))
+        // POST /auth/refresh - Refresh access token using refresh token
+        group.MapPost("/refresh", async (
+            RefreshTokenRequest request,
+            IAuthService authService,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await authService.RefreshTokenAsync(request.RefreshToken, cancellationToken);
+
+            if (result is null)
+            {
+                return Results.Json(
+                    new { success = false, message = "Invalid or expired refresh token" },
+                    statusCode: 401);
+            }
+
+            return Results.Ok(new
+            {
+                success = true,
+                token = result.Token,
+                expiresAt = result.ExpiresAt,
+                expiresIn = result.ExpiresIn
+            });
+        })
+        .WithName("RefreshToken")
+        .WithSummary("Refresh access token")
+        .WithDescription("Refreshes an expired access token using a valid refresh token. Returns a new access token.")
+        .Produces(200)
+        .Produces(401)
+        .WithOpenApi();
+
+        // POST /auth/logout - Logout endpoint (revokes refresh token)
+        group.MapPost("/logout", async (
+            IAuthService authService,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Results.Json(
+                    new { success = false, message = "Invalid or missing user authentication" },
+                    statusCode: 401);
+            }
+
+            await authService.RevokeRefreshTokenAsync(userId, cancellationToken);
+
+            return Results.Ok(new { success = true, message = "Logged out successfully" });
+        })
         .RequireAuthorization()
         .WithName("Logout")
         .WithSummary("User logout")
-        .WithDescription("Logout endpoint. In a stateless JWT system, the client should discard the token. In production, implement token blacklisting.")
+        .WithDescription("Logs out the user by revoking their refresh token. The client should also discard the access token.")
         .Produces(200)
         .Produces(401)
         .WithOpenApi();
@@ -154,6 +204,8 @@ public record LoginRequest
     [Required]
     [StringLength(100, MinimumLength = 8)]
     public required string Password { get; init; }
+
+    public bool RememberMe { get; init; } = false;
 }
 
 /// <summary>
@@ -163,6 +215,9 @@ public record LoginResponse(
     bool Success,
     string Message,
     string Token,
+    string RefreshToken,
+    DateTime ExpiresAt,
+    int ExpiresIn,
     UserResponseDto User);
 
 /// <summary>

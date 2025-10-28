@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using postgres_net_minimal_api.Users.Models;
 
-namespace postgres_net_minimal_api.Models;
+namespace postgres_net_minimal_api.Blog.Models;
 
 /// <summary>
 /// Comment on a blog post

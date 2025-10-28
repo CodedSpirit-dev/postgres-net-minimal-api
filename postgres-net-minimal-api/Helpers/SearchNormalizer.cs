@@ -20,16 +20,15 @@ public static class SearchNormalizer
             return string.Empty;
         }
 
-        // Convert to lowercase
-        var normalized = query.ToLowerInvariant();
+        var normalized = string.Create(query.Length, query, static (buffer, str) =>
+        {
+            str.AsSpan().ToLowerInvariant(buffer);
+        });
 
-        // Remove accents
         normalized = RemoveAccents(normalized);
 
-        // Remove extra whitespace
         normalized = string.Join(" ", normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
-        // Trim
         normalized = normalized.Trim();
 
         return normalized;

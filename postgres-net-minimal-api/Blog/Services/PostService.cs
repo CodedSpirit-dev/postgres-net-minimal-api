@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using postgres_net_minimal_api.Data;
-using postgres_net_minimal_api.DTOs;
+using postgres_net_minimal_api.Blog.DTOs;
 using postgres_net_minimal_api.Helpers;
-using postgres_net_minimal_api.Models;
-using postgres_net_minimal_api.Services;
+using postgres_net_minimal_api.Blog.Models;
+using postgres_net_minimal_api.Users.Models;
 
 namespace postgres_net_minimal_api.Blog.Services;
 
@@ -73,7 +73,6 @@ public class PostService(AppDbContext context) : IPostService
             query = query.Where(p => p.IsPublished == request.IsPublished.Value);
         }
 
-        // Filter by search query
         if (!string.IsNullOrWhiteSpace(request.Query))
         {
             var searchTerms = SearchNormalizer.GetSearchTerms(request.Query);
@@ -275,6 +274,7 @@ public class PostService(AppDbContext context) : IPostService
         CancellationToken cancellationToken = default)
     {
         var post = await _context.Posts
+            .AsTracking()
             .Include(p => p.PostTags)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 

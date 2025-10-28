@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace postgres_net_minimal_api.Models;
+namespace postgres_net_minimal_api.Blog.Models;
 
 /// <summary>
 /// Many-to-many relationship between Posts and Tags

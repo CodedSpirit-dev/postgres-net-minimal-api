@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using postgres_net_minimal_api.Data;
-using postgres_net_minimal_api.DTOs;
-using postgres_net_minimal_api.Models;
+using postgres_net_minimal_api.Users.DTOs;
+using postgres_net_minimal_api.Users.Models;
+using postgres_net_minimal_api.Roles.Models;
+using postgres_net_minimal_api.Helpers;
 
 namespace postgres_net_minimal_api.Services;
 
@@ -133,6 +135,7 @@ public class UserService(
         CancellationToken cancellationToken = default)
     {
         var user = await _context.Users
+            .AsTracking()
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
@@ -207,6 +210,7 @@ public class UserService(
         CancellationToken cancellationToken = default)
     {
         var user = await _context.Users
+            .AsTracking()
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 

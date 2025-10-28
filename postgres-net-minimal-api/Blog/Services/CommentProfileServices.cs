@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using postgres_net_minimal_api.Data;
-using postgres_net_minimal_api.DTOs;
+using postgres_net_minimal_api.Blog.DTOs;
 using postgres_net_minimal_api.Helpers;
-using postgres_net_minimal_api.Models;
+using postgres_net_minimal_api.Blog.Models;
+using postgres_net_minimal_api.Users.Models;
 
 namespace postgres_net_minimal_api.Blog.Services;
 
@@ -139,6 +140,7 @@ public class CommentService(AppDbContext context) : ICommentService
         CancellationToken cancellationToken = default)
     {
         var comment = await _context.Comments
+            .AsTracking()
             .Include(c => c.Author)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
@@ -161,6 +163,7 @@ public class CommentService(AppDbContext context) : ICommentService
     public async Task<bool> DeleteCommentAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var comment = await _context.Comments
+            .AsTracking()
             .Include(c => c.Post)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
@@ -185,6 +188,7 @@ public class CommentService(AppDbContext context) : ICommentService
     public async Task<bool> ApproveCommentAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var comment = await _context.Comments
+            .AsTracking()
             .Include(c => c.Post)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
@@ -213,6 +217,7 @@ public class CommentService(AppDbContext context) : ICommentService
     public async Task<bool> RejectCommentAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var comment = await _context.Comments
+            .AsTracking()
             .Include(c => c.Post)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
@@ -290,6 +295,7 @@ public class ProfileService(AppDbContext context) : IProfileService
         }
 
         var existingProfile = await _context.Profiles
+            .AsTracking()
             .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
 
         if (existingProfile is not null)

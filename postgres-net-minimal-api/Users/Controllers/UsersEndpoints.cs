@@ -1,7 +1,8 @@
-using postgres_net_minimal_api.DTOs;
+using postgres_net_minimal_api.Users.DTOs;
 using postgres_net_minimal_api.Services;
+using postgres_net_minimal_api.Helpers;
 
-namespace postgres_net_minimal_api.Controllers;
+namespace postgres_net_minimal_api.Users.Controllers;
 
 public static class UsersEndpoints
 {

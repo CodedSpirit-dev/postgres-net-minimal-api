@@ -1,4 +1,4 @@
-namespace postgres_net_minimal_api.DTOs;
+namespace postgres_net_minimal_api.Helpers;
 
 public record PagedResult<T>(
     IEnumerable<T> Items,

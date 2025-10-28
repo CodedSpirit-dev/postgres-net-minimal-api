@@ -1,8 +1,8 @@
 // Create these DTOs in a new file: DTOs/UserDtos.cs
 
-using postgres_net_minimal_api.Models;
+using postgres_net_minimal_api.Users.Models;
 
-namespace postgres_net_minimal_api.DTOs;
+namespace postgres_net_minimal_api.Users.DTOs;
 
 public record UserResponseDto(
     Guid Id,

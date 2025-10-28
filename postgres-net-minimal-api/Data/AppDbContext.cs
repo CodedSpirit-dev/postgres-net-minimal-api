@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using postgres_net_minimal_api.Models;
+using postgres_net_minimal_api.Users.Models;
+using postgres_net_minimal_api.Roles.Models;
+using postgres_net_minimal_api.Blog.Models;
 using postgres_net_minimal_api.Authorization.Models;
 
 namespace postgres_net_minimal_api.Data;

@@ -22,6 +22,12 @@ public interface IPasswordValidator
 /// </summary>
 public class PasswordValidator : IPasswordValidator
 {
+    private static readonly string[] CommonPasswords =
+    [
+        "password", "12345678", "password123", "qwerty123",
+        "admin123", "letmein", "welcome123"
+    ];
+
     public ValidationResult Validate(string password)
     {
         if (string.IsNullOrWhiteSpace(password))
@@ -45,15 +51,11 @@ public class PasswordValidator : IPasswordValidator
         if (!password.Any(ch => !char.IsLetterOrDigit(ch)))
             return ValidationResult.Failure("Password must contain at least one special character");
 
-        // Check for common weak passwords
-        string[] commonPasswords =
-        [
-            "password", "12345678", "password123", "qwerty123",
-            "admin123", "letmein", "welcome123"
-        ];
-
-        if (commonPasswords.Any(weak => password.ToLower().Contains(weak)))
-            return ValidationResult.Failure("Password is too common. Please choose a stronger password");
+        foreach (var commonPassword in CommonPasswords)
+        {
+            if (password.Contains(commonPassword, StringComparison.OrdinalIgnoreCase))
+                return ValidationResult.Failure("Password is too common. Please choose a stronger password");
+        }
 
         return ValidationResult.Success();
     }
