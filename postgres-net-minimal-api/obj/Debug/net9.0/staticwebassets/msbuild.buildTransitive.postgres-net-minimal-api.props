@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../buildMultiTargeting/postgres-net-minimal-api.props" />
-</Project>
