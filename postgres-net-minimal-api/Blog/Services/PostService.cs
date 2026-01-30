@@ -245,15 +245,14 @@ public class PostService(AppDbContext context) : IPostService
                 .Select(t => t.Id)
                 .ToListAsync(cancellationToken);
 
-            foreach (var tagId in validTagIds)
+            // Use AddRange for better performance with multiple entities
+            var postTags = validTagIds.Select(tagId => new PostTag
             {
-                _context.PostTags.Add(new PostTag
-                {
-                    PostId = post.Id,
-                    TagId = tagId,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
+                PostId = post.Id,
+                TagId = tagId,
+                CreatedAt = DateTime.UtcNow
+            });
+            _context.PostTags.AddRange(postTags);
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -344,15 +343,14 @@ public class PostService(AppDbContext context) : IPostService
                 .Select(t => t.Id)
                 .ToListAsync(cancellationToken);
 
-            foreach (var tagId in validTagIds)
+            // Use AddRange for better performance with multiple entities
+            var postTags = validTagIds.Select(tagId => new PostTag
             {
-                _context.PostTags.Add(new PostTag
-                {
-                    PostId = post.Id,
-                    TagId = tagId,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
+                PostId = post.Id,
+                TagId = tagId,
+                CreatedAt = DateTime.UtcNow
+            });
+            _context.PostTags.AddRange(postTags);
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -461,13 +459,13 @@ public class PostService(AppDbContext context) : IPostService
 
     public async Task IncrementViewCountAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var post = await _context.Posts.FindAsync([id], cancellationToken);
-
-        if (post is not null)
-        {
-            post.ViewCount++;
-            await _context.SaveChangesAsync(cancellationToken);
-        }
+        // Use ExecuteUpdateAsync to avoid race conditions with concurrent requests
+        // This executes as a single atomic SQL UPDATE operation
+        await _context.Posts
+            .Where(p => p.Id == id)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(p => p.ViewCount, p => p.ViewCount + 1),
+                cancellationToken);
     }
 
     public async Task<List<PopularPostDto>> GetMostViewedPostsAsync(
