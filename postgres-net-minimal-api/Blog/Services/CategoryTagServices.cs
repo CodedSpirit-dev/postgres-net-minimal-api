@@ -26,6 +26,7 @@ public class CategoryService(AppDbContext context) : ICategoryService
     {
         return await _context.Categories
             .AsNoTracking()
+            .OrderBy(c => c.Name) // OrderBy BEFORE Select
             .Select(c => new CategoryResponseDto(
                 c.Id,
                 c.Name,
@@ -35,7 +36,6 @@ public class CategoryService(AppDbContext context) : ICategoryService
                 c.CreatedAt,
                 c.UpdatedAt
             ))
-            .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
     }
 
