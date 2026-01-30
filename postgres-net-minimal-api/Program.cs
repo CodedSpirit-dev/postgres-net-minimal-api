@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -46,6 +45,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     // Use NoTracking by default for better performance (opt-in when needed)
     options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
 });
+
+// Register SOLID pattern components (Repository Pattern - DIP + DRY)
+builder.Services.AddScoped(typeof(postgres_net_minimal_api.Common.Interfaces.IRepository<>), typeof(postgres_net_minimal_api.Common.Repository.GenericRepository<>));
+builder.Services.AddScoped(typeof(postgres_net_minimal_api.Common.Interfaces.IQueryableRepository<>), typeof(postgres_net_minimal_api.Common.Repository.GenericRepository<>));
+
+// Register validators (SRP - Single Responsibility Principle)
+builder.Services.AddSingleton<postgres_net_minimal_api.Common.Validation.IValidator<string>, postgres_net_minimal_api.Common.Validation.PasswordStrengthValidator>();
+builder.Services.AddSingleton<postgres_net_minimal_api.Common.Validation.EmailFormatValidator>();
+builder.Services.AddSingleton<postgres_net_minimal_api.Common.Validation.UsernameFormatValidator>();
 
 // Register application services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -135,62 +143,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Add Swagger/OpenAPI
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Version = "v1",
-        Title = "PostgreSQL Minimal API",
-        Description = "Una API web ASP.NET Core para gestión de usuarios y roles con PostgreSQL",
-        Contact = new OpenApiContact
-        {
-            Name = "Tu Nombre",
-            Email = "tu.email@ejemplo.com"
-        }
-    });
-
-    // JWT Authentication configuration for Swagger
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header usando el esquema Bearer. \r\n\r\n " +
-                      "Ingresa 'Bearer' [espacio] y luego tu token en el campo de texto a continuación.\r\n\r\n" +
-                      "Ejemplo: \"Bearer 12345abcdef\"",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT"
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
-    });
-});
+// Add OpenAPI (Built-in .NET 10 support)
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "PostgreSQL Minimal API v1");
-        c.RoutePrefix = string.Empty; // Swagger UI at root
-    });
+    app.MapOpenApi(); // Maps the OpenAPI endpoint at /openapi/v1.json
 }
 
 // Global exception handling middleware
