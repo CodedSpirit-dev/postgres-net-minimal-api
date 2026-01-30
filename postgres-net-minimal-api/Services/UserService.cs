@@ -207,6 +207,7 @@ public class UserService(
         CancellationToken cancellationToken = default)
     {
         var user = await _context.Users
+            .AsTracking()
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
