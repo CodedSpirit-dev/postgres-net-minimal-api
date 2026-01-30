@@ -10,10 +10,12 @@ namespace postgres_net_minimal_api.Services;
 public class AuthService(
     AppDbContext context,
     IPasswordHasher passwordHasher,
+    IPasswordValidator passwordValidator,
     IJwtTokenGenerator tokenGenerator) : IAuthService
 {
     private readonly AppDbContext _context = context;
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
+    private readonly IPasswordValidator _passwordValidator = passwordValidator;
     private readonly IJwtTokenGenerator _tokenGenerator = tokenGenerator;
 
     public async Task<string?> AuthenticateAsync(
@@ -125,6 +127,13 @@ public class AuthService(
         if (!_passwordHasher.VerifyPassword(currentPassword, user.HashedPassword))
         {
             return false;
+        }
+
+        // Validate new password strength (same validation as registration)
+        var passwordValidation = _passwordValidator.Validate(newPassword);
+        if (!passwordValidation.IsValid)
+        {
+            throw new InvalidOperationException(passwordValidation.ErrorMessage);
         }
 
         // Hash new password
