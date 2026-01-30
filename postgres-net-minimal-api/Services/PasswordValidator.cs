@@ -1,8 +1,12 @@
+using postgres_net_minimal_api.Common.Results;
+
 namespace postgres_net_minimal_api.Services;
 
 /// <summary>
-/// Validation result for password strength checks
+/// Validation result for password strength checks (LEGACY - Use Common.Results.Result instead)
+/// Kept for backward compatibility
 /// </summary>
+[Obsolete("Use postgres_net_minimal_api.Common.Results.Result instead")]
 public record ValidationResult(bool IsValid, string? ErrorMessage)
 {
     public static ValidationResult Success() => new(true, null);
@@ -19,41 +23,37 @@ public interface IPasswordValidator
 
 /// <summary>
 /// Default password validator with standard security requirements
+/// Now uses the new Result pattern (SOLID principles applied)
 /// </summary>
 public class PasswordValidator : IPasswordValidator
 {
+    private readonly Common.Validation.PasswordStrengthValidator _strengthValidator;
+    private readonly string[] _commonPasswords =
+    [
+        "password", "12345678", "password123", "qwerty123",
+        "admin123", "letmein", "welcome123"
+    ];
+
+    public PasswordValidator()
+    {
+        _strengthValidator = new Common.Validation.PasswordStrengthValidator();
+    }
+
     public ValidationResult Validate(string password)
     {
-        if (string.IsNullOrWhiteSpace(password))
-            return ValidationResult.Failure("Password is required");
+        // Use new validator system
+        var result = _strengthValidator.Validate(password);
 
-        if (password.Length < 8)
-            return ValidationResult.Failure("Password must be at least 8 characters long");
+        if (result.IsFailure)
+        {
+            return ValidationResult.Failure(result.ErrorMessage!);
+        }
 
-        if (password.Length > 100)
-            return ValidationResult.Failure("Password must be less than 100 characters");
-
-        if (!password.Any(char.IsDigit))
-            return ValidationResult.Failure("Password must contain at least one digit");
-
-        if (!password.Any(char.IsUpper))
-            return ValidationResult.Failure("Password must contain at least one uppercase letter");
-
-        if (!password.Any(char.IsLower))
-            return ValidationResult.Failure("Password must contain at least one lowercase letter");
-
-        if (!password.Any(ch => !char.IsLetterOrDigit(ch)))
-            return ValidationResult.Failure("Password must contain at least one special character");
-
-        // Check for common weak passwords
-        string[] commonPasswords =
-        [
-            "password", "12345678", "password123", "qwerty123",
-            "admin123", "letmein", "welcome123"
-        ];
-
-        if (commonPasswords.Any(weak => password.ToLower().Contains(weak)))
+        // Additional check for common weak passwords
+        if (_commonPasswords.Any(weak => password.ToLower().Contains(weak)))
+        {
             return ValidationResult.Failure("Password is too common. Please choose a stronger password");
+        }
 
         return ValidationResult.Success();
     }
