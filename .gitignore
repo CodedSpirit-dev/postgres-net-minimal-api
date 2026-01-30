@@ -48,3 +48,15 @@ artifacts/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# Documentation (commit only when explicitly requested)
+docs/
+**/README.md
+
+# Generated commit files
+commit-*.md
+commits.md
