@@ -51,6 +51,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         // Fixed GUIDs for users
         var superAdminUserId = Guid.Parse("50000000-0000-0000-0000-000000000000");
+        var codedSpiritUserId = Guid.Parse("50000000-0000-0000-0000-000000000001");
         var adminUserId = Guid.Parse("A1111111-1111-1111-1111-111111111111");
         var standardUserId = Guid.Parse("B2222222-2222-2222-2222-222222222222");
         var guestUserId = Guid.Parse("C3333333-3333-3333-3333-333333333333");
@@ -61,6 +62,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // Admin: yoadmin123
         // User: youser123
         // Guest: yoguest123
+        // codedspirit: WaitForAll25!  (personal SuperAdmin account)
         modelBuilder.Entity<User>().HasData(
             new User
             {
@@ -71,6 +73,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 Email = "superadmin@admin.com",
                 HashedPassword = "$2a$12$AIyvBPaFAwg.HVFlbCXTMugw8A4hU6LKlJCCbqxMiFvobB3eu0JYW", // yosuperadmin123
                 DateOfBirth = new DateOnly(1985, 1, 1),
+                RoleId = superAdminRoleId
+            },
+            new User
+            {
+                Id = codedSpiritUserId,
+                UserName = "codedspirit",
+                FirstName = "Coded",
+                LastName = "Spirit",
+                Email = "codedspirit@admin.com",
+                HashedPassword = "$2a$11$dae4NmZDBgaxCPjLIhX.u.apR40SCBsd9sm0PCvNdmcu4JdKldbTG", // WaitForAll25!
+                DateOfBirth = new DateOnly(2000, 1, 1),
                 RoleId = superAdminRoleId
             },
             new User
